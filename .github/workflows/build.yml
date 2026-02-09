@@ -39,6 +39,24 @@ jobs:
           exit 1
         }
         
+        # 复制后端文件到imgui目录
+        if (Test-Path "imgui\backends\imgui_impl_win32.cpp") {
+          Copy-Item "imgui\backends\imgui_impl_win32.cpp" -Destination "imgui\"
+          Copy-Item "imgui\backends\imgui_impl_win32.h" -Destination "imgui\"
+          Copy-Item "imgui\backends\imgui_impl_dx11.cpp" -Destination "imgui\"
+          Copy-Item "imgui\backends\imgui_impl_dx11.h" -Destination "imgui\"
+          echo "Backend files copied successfully"
+        } else {
+          echo "Backend files not found, checking alternative location..."
+          if (Test-Path "imgui\examples\imgui_impl_win32.cpp") {
+            Copy-Item "imgui\examples\imgui_impl_win32.cpp" -Destination "imgui\"
+            Copy-Item "imgui\examples\imgui_impl_win32.h" -Destination "imgui\"
+            Copy-Item "imgui\examples\imgui_impl_dx11.cpp" -Destination "imgui\"
+            Copy-Item "imgui\examples\imgui_impl_dx11.h" -Destination "imgui\"
+            echo "Backend files copied from examples directory"
+          }
+        }
+        
         # 列出imgui目录内容
         echo "imgui directory contents:"
         Get-ChildItem "imgui" | Select-Object Name
