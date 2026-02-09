@@ -27,7 +27,7 @@ private:
     std::string targetIp;
     int port = 0;
 
-    SOCKET socket = INVALID_SOCKET;
+    SOCKET udpSocket = INVALID_SOCKET;
     sockaddr_in serverAddr;
 
     bool connected = false;

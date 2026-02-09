@@ -25,8 +25,8 @@ bool UdpSender::createSocket() {
     }
 
     // 创建UDP socket
-    socket = ::socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-    if (socket == INVALID_SOCKET) {
+    udpSocket = ::socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    if (udpSocket == INVALID_SOCKET) {
         std::cerr << "Failed to create socket: " << WSAGetLastError() << std::endl;
         WSACleanup();
         return false;
@@ -34,7 +34,7 @@ bool UdpSender::createSocket() {
 
     // 设置socket为非阻塞模式
     u_long mode = 1;
-    ioctlsocket(socket, FIONBIO, &mode);
+    ioctlsocket(udpSocket, FIONBIO, &mode);
 
     std::cout << "UDP socket created successfully" << std::endl;
     return true;
@@ -74,9 +74,9 @@ bool UdpSender::initialize(const std::string& ip, int p) {
 }
 
 void UdpSender::cleanup() {
-    if (socket != INVALID_SOCKET) {
-        closesocket(socket);
-        socket = INVALID_SOCKET;
+    if (udpSocket != INVALID_SOCKET) {
+        closesocket(udpSocket);
+        udpSocket = INVALID_SOCKET;
     }
 
     WSACleanup();
@@ -86,13 +86,13 @@ void UdpSender::cleanup() {
 }
 
 bool UdpSender::sendPacket(const uint8_t* data, size_t size) {
-    if (!connected || socket == INVALID_SOCKET) {
+    if (!connected || udpSocket == INVALID_SOCKET) {
         return false;
     }
 
     // 发送数据包
-    int bytesSent = sendto(
-        socket,
+    int bytesSentResult = sendto(
+        udpSocket,
         reinterpret_cast<const char*>(data),
         static_cast<int>(size),
         0,
@@ -100,7 +100,7 @@ bool UdpSender::sendPacket(const uint8_t* data, size_t size) {
         sizeof(serverAddr)
     );
 
-    if (bytesSent == SOCKET_ERROR) {
+    if (bytesSentResult == SOCKET_ERROR) {
         int error = WSAGetLastError();
         if (error != WSAEWOULDBLOCK) {
             std::cerr << "Failed to send packet: " << error << std::endl;
@@ -109,7 +109,7 @@ bool UdpSender::sendPacket(const uint8_t* data, size_t size) {
     }
 
     // 更新统计信息
-    this->bytesSent += bytesSent;
+    bytesSent += bytesSentResult;
     packetsSent++;
 
     return true;

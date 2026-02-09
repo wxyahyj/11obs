@@ -30,26 +30,42 @@ jobs:
         Expand-Archive -Path "imgui.zip" -DestinationPath "."
         Move-Item "imgui-1.90.6" "imgui"
         Remove-Item "imgui.zip"
-
-    - name: Create imgui directory structure
-      run: |
-        # 创建imgui目录结构
-        if (-not (Test-Path "imgui")) {
-          New-Item -ItemType Directory -Path "imgui" -Force
+        
+        # 验证ImGui文件
+        if (Test-Path "imgui\imgui.h") {
+          echo "ImGui downloaded successfully"
+        } else {
+          echo "Failed to download ImGui"
+          exit 1
         }
+        
+        # 列出imgui目录内容
+        echo "imgui directory contents:"
+        Get-ChildItem "imgui" | Select-Object Name
 
     - name: Build project
       run: |
         # 使用MSBuild构建项目
         # 注意：由于GitHub Actions环境没有NVIDIA GPU和NVENC SDK，
         # 我们使用条件编译，当NVENC不可用时使用简化实现
-        msbuild UDPStreamer.vcxproj /p:Configuration=Release /p:Platform=x64 /p:NVENC_AVAILABLE=0
+        msbuild UDPStreamer.vcxproj /p:Configuration=Release /p:Platform=x64 /p:NVENC_AVAILABLE=0 /v:minimal 2>&1 | Tee-Object -FilePath build_output.txt
+
+    - name: Check build output
+      if: always()
+      run: |
+        # 显示构建输出
+        if (Test-Path "build_output.txt") {
+          echo "=== Build Output ==="
+          Get-Content build_output.txt
+        }
 
     - name: Verify build
       run: |
         # 检查构建结果
         if (Test-Path "x64\Release\UDPStreamer.exe") {
           echo "Build successful!"
+          $fileSize = (Get-Item "x64\Release\UDPStreamer.exe").Length
+          echo "File size: $fileSize bytes"
         } else {
           echo "Build failed!"
           exit 1
@@ -60,6 +76,14 @@ jobs:
       with:
         name: UDPStreamer
         path: x64\Release\UDPStreamer.exe
+        retention-days: 7
+
+    - name: Upload build log
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-log
+        path: build_output.txt
         retention-days: 7
 
     - name: Build summary

@@ -90,6 +90,12 @@
     <ClCompile Include="core\UdpSender.cpp" />
     <ClCompile Include="app\StreamController.cpp" />
     <ClCompile Include="ui\MainWindow.cpp" />
+    <ClCompile Include="imgui\imgui.cpp" />
+    <ClCompile Include="imgui\imgui_draw.cpp" />
+    <ClCompile Include="imgui\imgui_widgets.cpp" />
+    <ClCompile Include="imgui\imgui_tables.cpp" />
+    <ClCompile Include="imgui\imgui_impl_win32.cpp" />
+    <ClCompile Include="imgui\imgui_impl_dx11.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="core\ScreenCapture.h" />
@@ -98,6 +104,9 @@
     <ClInclude Include="app\StreamConfig.h" />
     <ClInclude Include="app\StreamController.h" />
     <ClInclude Include="ui\MainWindow.h" />
+    <ClInclude Include="imgui\imgui.h" />
+    <ClInclude Include="imgui\imgui_impl_win32.h" />
+    <ClInclude Include="imgui\imgui_impl_dx11.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="README.md" />
