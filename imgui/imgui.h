@@ -33,7 +33,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
-#include <vector>
+
 
 //---- Forward declarations
 struct ImDrawCmd;       // Draw command list (list of ImDrawCmd)
@@ -91,22 +91,24 @@ struct ImVector
 
 //---- Enumerations
 // Draw list flags
-typedef enum ImDrawListFlags_ {
+enum ImDrawListFlags_ {
     ImDrawListFlags_None                   = 0,
     ImDrawListFlags_Closed                 = 1 << 0, // Path is closed by default (requires FillConvexPoly)
     ImDrawListFlags_AntiAliasedLines       = 1 << 1, // Enable anti-aliased lines/borders
     ImDrawListFlags_AntiAliasedFill        = 1 << 2, // Enable anti-aliased fills
     ImDrawListFlags_AllowVtxOffset         = 1 << 3, // Allow large meshes (64k+ vertices) with 16-bit indices
     ImDrawListFlags_TextureIDStretched     = 1 << 4, // Texture ID is stretched to cover the entire draw area
-} ImDrawListFlags;
+};
+typedef int ImDrawListFlags;
 
 // Draw command flags
-typedef enum ImDrawCmdFlags_ {
+enum ImDrawCmdFlags_ {
     ImDrawCmdFlags_None                    = 0,
     ImDrawCmdFlags_UserCallbackInvoke      = 1 << 0, // User callback to be called
     ImDrawCmdFlags_UserCallbackHasOutput   = 1 << 1, // User callback may output draw commands
     ImDrawCmdFlags_LayerNext               = 1 << 2, // Switch to next layer
-} ImDrawCmdFlags;
+};
+typedef int ImDrawCmdFlags;
 
 // Font Atlas flags
 typedef enum ImFontAtlasFlags_ {
@@ -659,7 +661,6 @@ typedef uint16_t ImDrawIdx;
 
 // Draw command
 struct ImDrawCmd {
-    ImDrawCmd() : clip_rect(0, 0, 0, 0), texture_id(nullptr), vtx_offset(0), idx_offset(0), elem_count(0), flags(0), user_callback(nullptr), user_callback_data(nullptr) {}
     ImVec4 clip_rect;
     void* texture_id;
     uint32_t vtx_offset;
@@ -675,17 +676,17 @@ struct ImDrawCmd {
 // Draw list
 struct ImDrawList {
     ImDrawList() : vtx_buffer(), idx_buffer(), cmd_buffer(), flags(0), texture_id(nullptr), vtx_current_idx(0), idx_current_idx(0), clip_rect_stack(), texture_id_stack(), is_channels_split(false), channels(), channels_current(0), shared_data(nullptr) {}
-    std::vector<ImDrawVert> vtx_buffer;
-    std::vector<ImDrawIdx> idx_buffer;
-    std::vector<ImDrawCmd> cmd_buffer;
+    ImVector<ImDrawVert> vtx_buffer;
+    ImVector<ImDrawIdx> idx_buffer;
+    ImVector<ImDrawCmd> cmd_buffer;
     ImDrawListFlags flags;
     void* texture_id;
     uint32_t vtx_current_idx;
     uint32_t idx_current_idx;
-    std::vector<ImVec4> clip_rect_stack;
-    std::vector<void*> texture_id_stack;
+    ImVector<ImVec4> clip_rect_stack;
+    ImVector<void*> texture_id_stack;
     bool is_channels_split;
-    std::vector<ImDrawList*> channels;
+    ImVector<ImDrawList*> channels;
     int channels_current;
     ImDrawListSharedData* shared_data;
 };
