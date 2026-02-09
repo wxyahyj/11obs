@@ -57,26 +57,26 @@ bool ScreenCapture::initialize(unsigned int displayIndex, unsigned int outWidth,
         return false;
     }
     
-    // 直接创建DXGI工厂2接口
-    IDXGIFactory2* dxgiFactory = nullptr;
-    hr = CreateDXGIFactory2(0, __uuidof(IDXGIFactory2), (void**)&dxgiFactory);
+    // 获取DXGI设备和适配器
+    IDXGIDevice* dxgiDevice = nullptr;
+    hr = device->QueryInterface(__uuidof(IDXGIDevice), (void**)&dxgiDevice);
     if (FAILED(hr)) {
-        // 如果创建IDXGIFactory2失败，尝试创建IDXGIFactory1
-        hr = CreateDXGIFactory1(__uuidof(IDXGIFactory1), (void**)&dxgiFactory);
-        if (FAILED(hr)) {
-            // 如果创建IDXGIFactory1失败，尝试创建IDXGIFactory
-            hr = CreateDXGIFactory(__uuidof(IDXGIFactory), (void**)&dxgiFactory);
-            if (FAILED(hr)) {
-                std::cerr << "Failed to create DXGI factory: " << hr << std::endl;
-                return false;
-            }
-        }
+        std::cerr << "Failed to get DXGI device: " << hr << std::endl;
+        return false;
+    }
+    
+    IDXGIAdapter* dxgiAdapter = nullptr;
+    hr = dxgiDevice->GetParent(__uuidof(IDXGIAdapter), (void**)&dxgiAdapter);
+    dxgiDevice->Release();
+    if (FAILED(hr)) {
+        std::cerr << "Failed to get DXGI adapter: " << hr << std::endl;
+        return false;
     }
     
     // 获取显示输出
     IDXGIOutput* dxgiOutput = nullptr;
-    hr = dxgiFactory->EnumOutputs(displayIndex, &dxgiOutput);
-    dxgiFactory->Release();
+    hr = dxgiAdapter->EnumOutputs(displayIndex, &dxgiOutput);
+    dxgiAdapter->Release();
     if (FAILED(hr)) {
         std::cerr << "Failed to get DXGI output: " << hr << std::endl;
         return false;
