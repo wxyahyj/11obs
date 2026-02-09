@@ -38,6 +38,7 @@ bool ScreenCapture::initialize(unsigned int displayIndex, unsigned int outWidth,
     outputHeight = outHeight;
     
     // 创建D3D11设备
+    // 使用IDXGIAdapter的EnumOutputs方法来获取显示输出，避免IDXGIFactory接口版本问题
     D3D_FEATURE_LEVEL featureLevel;
     HRESULT hr = D3D11CreateDevice(
         nullptr,
