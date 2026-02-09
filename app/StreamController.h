@@ -1,14 +1,26 @@
 #pragma once
 
-#include "StreamConfig.h"
-#include "ScreenCapture.h"
-#include "NVEncoder.h"
-#include "UdpSender.h"
+#include <cstdint>
+#include <vector>
+#include <chrono>
 #include <thread>
 #include <atomic>
 #include <mutex>
 #include <queue>
 #include <condition_variable>
+
+#include "StreamConfig.h"
+
+// 前向声明
+class ScreenCapture;
+class NVEncoder;
+class UdpSender;
+
+// 避免循环包含的类型定义
+struct CaptureFrame {
+    void* texture;
+    uint64_t timestamp;
+};
 
 class StreamController {
 public:
@@ -54,7 +66,7 @@ private:
     std::atomic<bool> running;
 
     // 帧队列
-    std::queue<ScreenCapture::CaptureFrame> captureQueue;
+    std::queue<CaptureFrame> captureQueue;
     std::queue<std::vector<uint8_t>> encodeQueue;
 
     // 队列同步

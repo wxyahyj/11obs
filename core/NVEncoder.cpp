@@ -3,6 +3,9 @@
 #include <cstring>
 #include <sstream>
 
+// DirectX头文件
+#include <d3d11.h>
+
 NVEncoder::NVEncoder() {
 }
 
@@ -11,7 +14,7 @@ NVEncoder::~NVEncoder() {
 }
 
 bool NVEncoder::initialize(
-    ID3D11Device* device,
+    void* device,
     int w,
     int h,
     int fps_,
@@ -23,14 +26,19 @@ bool NVEncoder::initialize(
             return false;
         }
 
-        d3d11Device = device;
-        HRESULT hr = device->GetImmediateContext(&d3d11Context);
+        // 将void*转换回实际类型
+        ID3D11Device* d3dDevice = static_cast<ID3D11Device*>(device);
+        d3d11Device = d3dDevice;
+        
+        ID3D11DeviceContext* context;
+        HRESULT hr = d3dDevice->GetImmediateContext(&context);
         if (FAILED(hr)) {
             std::stringstream ss;
             ss << "Failed to get D3D11 immediate context: " << hr;
             lastError = ss.str();
             return false;
         }
+        d3d11Context = context;
         
         width = w;
         height = h;
@@ -336,7 +344,7 @@ bool NVEncoder::createBitstreamBuffer() {
 #endif
 
 bool NVEncoder::encode(
-    ID3D11Texture2D* inputTexture,
+    void* inputTexture,
     std::vector<uint8_t>& output
 ) {
     if (!initialized) {
@@ -348,6 +356,9 @@ bool NVEncoder::encode(
         lastError = "Invalid input texture pointer";
         return false;
     }
+    
+    // 将void*转换回实际类型
+    ID3D11Texture2D* d3dTexture = static_cast<ID3D11Texture2D*>(inputTexture);
 
 #ifdef NVENC_AVAILABLE
     try {
@@ -374,11 +385,14 @@ bool NVEncoder::encode(
         srcBox.bottom = height;
         srcBox.back = 1;
 
-        d3d11Context->CopySubresourceRegion(
+        // 将void*转换回实际类型
+        ID3D11DeviceContext* context = static_cast<ID3D11DeviceContext*>(d3d11Context);
+        
+        context->CopySubresourceRegion(
             static_cast<ID3D11Texture2D*>(nvencMappedResource),
             0,
             0, 0, 0,
-            inputTexture,
+            d3dTexture,
             0,
             &srcBox
         );

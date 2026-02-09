@@ -2,6 +2,7 @@
 #include <iostream>
 #include <chrono>
 #include <stdexcept>
+#include <windows.h>
 
 StreamController::StreamController()
     : running(false),
@@ -155,7 +156,7 @@ void StreamController::captureThreadFunc() {
 
         while (running) {
             try {
-                ScreenCapture::CaptureFrame frame;
+                CaptureFrame frame;
                 if (screenCapture.captureFrame(frame)) {
                     // 检查队列大小，避免缓冲过多
                     std::lock_guard<std::mutex> lock(captureMutex);
@@ -191,7 +192,7 @@ void StreamController::encodeThreadFunc() {
 
         while (running) {
             try {
-                ScreenCapture::CaptureFrame frame;
+                CaptureFrame frame;
                 bool gotFrame = false;
                 
                 {
@@ -214,7 +215,7 @@ void StreamController::encodeThreadFunc() {
                 if (gotFrame) {
                     // 编码帧
                     std::vector<uint8_t> encodedData;
-                    if (encoder.encode(frame.texture.Get(), encodedData)) {
+                    if (encoder.encode(frame.texture, encodedData)) {
                         // 检查队列大小，避免缓冲过多
                         std::lock_guard<std::mutex> lock(encodeMutex);
                         if (encodeQueue.size() >= static_cast<size_t>(config.encodeQueueSize)) {

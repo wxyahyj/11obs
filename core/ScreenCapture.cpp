@@ -3,6 +3,13 @@
 #include <chrono>
 #include <stdexcept>
 
+// DirectX头文件
+#include <d3d11.h>
+#include <dxgi1_2.h>
+#include <wrl/client.h>
+
+using Microsoft::WRL::ComPtr;
+
 ScreenCapture::ScreenCapture()
     : outputWidth(0),
       outputHeight(0),
@@ -37,6 +44,9 @@ bool ScreenCapture::createD3DDevice() {
 #endif
 
         D3D_FEATURE_LEVEL featureLevel;
+        ComPtr<ID3D11Device> device;
+        ComPtr<ID3D11DeviceContext> context;
+        
         HRESULT hr = D3D11CreateDevice(
             nullptr,
             D3D_DRIVER_TYPE_HARDWARE,
@@ -45,15 +55,19 @@ bool ScreenCapture::createD3DDevice() {
             featureLevels,
             ARRAYSIZE(featureLevels),
             D3D11_SDK_VERSION,
-            &d3d11Device,
+            &device,
             &featureLevel,
-            &d3d11Context
+            &context
         );
 
         if (FAILED(hr)) {
             std::cerr << "Failed to create D3D11 device: " << std::hex << hr << std::endl;
             return false;
         }
+
+        // 存储为void*
+        d3d11Device = device.Detach();
+        d3d11Context = context.Detach();
 
         std::cout << "D3D11 device created successfully" << std::endl;
         return true;
@@ -70,8 +84,12 @@ bool ScreenCapture::setupDesktopDuplication() {
             return false;
         }
 
+        // 将void*转换回实际类型
+        ID3D11Device* device = static_cast<ID3D11Device*>(d3d11Device);
+        ComPtr<ID3D11Device> d3dDevice(device);
+
         ComPtr<IDXGIDevice> dxgiDevice;
-        HRESULT hr = d3d11Device.As(&dxgiDevice);
+        HRESULT hr = d3dDevice.As(&dxgiDevice);
         if (FAILED(hr)) {
             std::cerr << "Failed to get DXGI device" << std::endl;
             return false;
@@ -85,15 +103,18 @@ bool ScreenCapture::setupDesktopDuplication() {
         }
 
         // 获取第一个输出（主显示器）
-        hr = dxgiAdapter->EnumOutputs(0, &dxgiOutput);
+        ComPtr<IDXGIOutput> output;
+        hr = dxgiAdapter->EnumOutputs(0, &output);
         if (FAILED(hr)) {
             std::cerr << "Failed to get DXGI output" << std::endl;
             return false;
         }
+        dxgiOutput = output.Detach();
 
         // 获取输出描述
+        IDXGIOutput* dxgiOut = static_cast<IDXGIOutput*>(dxgiOutput);
         DXGI_OUTPUT_DESC outputDesc;
-        hr = dxgiOutput->GetDesc(&outputDesc);
+        hr = dxgiOut->GetDesc(&outputDesc);
         if (FAILED(hr)) {
             std::cerr << "Failed to get output description" << std::endl;
             return false;
@@ -119,17 +140,19 @@ bool ScreenCapture::setupDesktopDuplication() {
 
         // 创建Desktop Duplication
         ComPtr<IDXGIOutput1> output1;
-        hr = dxgiOutput.As(&output1);
+        hr = output.As(&output1);
         if (FAILED(hr)) {
             std::cerr << "Failed to get IDXGIOutput1" << std::endl;
             return false;
         }
 
-        hr = output1->DuplicateOutput(d3d11Device.Get(), &duplication);
+        ComPtr<IDXGIOutputDuplication> dup;
+        hr = output1->DuplicateOutput(device, &dup);
         if (FAILED(hr)) {
             std::cerr << "Failed to create desktop duplication: " << std::hex << hr << std::endl;
             return false;
         }
+        duplication = dup.Detach();
 
         std::cout << "Desktop duplication created successfully" << std::endl;
         return true;
@@ -146,6 +169,9 @@ bool ScreenCapture::createOutputTexture() {
             return false;
         }
 
+        // 将void*转换回实际类型
+        ID3D11Device* device = static_cast<ID3D11Device*>(d3d11Device);
+
         D3D11_TEXTURE2D_DESC texDesc = {};
         texDesc.Width = outputWidth;
         texDesc.Height = outputHeight;
@@ -159,11 +185,13 @@ bool ScreenCapture::createOutputTexture() {
         texDesc.CPUAccessFlags = 0;
         texDesc.MiscFlags = 0;
 
-        HRESULT hr = d3d11Device->CreateTexture2D(&texDesc, nullptr, &outputTexture);
+        ComPtr<ID3D11Texture2D> texture;
+        HRESULT hr = device->CreateTexture2D(&texDesc, nullptr, &texture);
         if (FAILED(hr)) {
             std::cerr << "Failed to create output texture" << std::endl;
             return false;
         }
+        outputTexture = texture.Detach();
 
         std::cout << "Output texture created: " << outputWidth << "x" << outputHeight << std::endl;
         return true;
@@ -214,18 +242,43 @@ void ScreenCapture::cleanup() {
         if (duplication) {
             // 尝试释放当前帧
             try {
-                duplication->ReleaseFrame();
+                IDXGIOutputDuplication* dup = static_cast<IDXGIOutputDuplication*>(duplication);
+                dup->ReleaseFrame();
             } catch (...) {
                 // 忽略可能的异常
             }
         }
 
-        // 重置所有ComPtr
-        duplication.Reset();
-        dxgiOutput.Reset();
-        outputTexture.Reset();
-        d3d11Context.Reset();
-        d3d11Device.Reset();
+        // 释放资源
+        if (d3d11Device) {
+            ID3D11Device* device = static_cast<ID3D11Device*>(d3d11Device);
+            device->Release();
+            d3d11Device = nullptr;
+        }
+        
+        if (d3d11Context) {
+            ID3D11DeviceContext* context = static_cast<ID3D11DeviceContext*>(d3d11Context);
+            context->Release();
+            d3d11Context = nullptr;
+        }
+        
+        if (duplication) {
+            IDXGIOutputDuplication* dup = static_cast<IDXGIOutputDuplication*>(duplication);
+            dup->Release();
+            duplication = nullptr;
+        }
+        
+        if (dxgiOutput) {
+            IDXGIOutput* output = static_cast<IDXGIOutput*>(dxgiOutput);
+            output->Release();
+            dxgiOutput = nullptr;
+        }
+        
+        if (outputTexture) {
+            ID3D11Texture2D* texture = static_cast<ID3D11Texture2D*>(outputTexture);
+            texture->Release();
+            outputTexture = nullptr;
+        }
 
         // 重置状态
         outputWidth = 0;
@@ -249,10 +302,15 @@ bool ScreenCapture::captureFrame(CaptureFrame& frame) {
             return false;
         }
 
+        // 将void*转换回实际类型
+        IDXGIOutputDuplication* dup = static_cast<IDXGIOutputDuplication*>(duplication);
+        ID3D11DeviceContext* context = static_cast<ID3D11DeviceContext*>(d3d11Context);
+        ID3D11Texture2D* outTexture = static_cast<ID3D11Texture2D*>(outputTexture);
+
         // 获取下一帧
         DXGI_OUTDUPL_FRAME_INFO frameInfo;
         ComPtr<IDXGIResource> resource;
-        HRESULT hr = duplication->AcquireNextFrame(1000, &frameInfo, &resource);
+        HRESULT hr = dup->AcquireNextFrame(1000, &frameInfo, &resource);
         
         if (hr == DXGI_ERROR_WAIT_TIMEOUT) {
             return false;
@@ -262,11 +320,11 @@ bool ScreenCapture::captureFrame(CaptureFrame& frame) {
             if (hr == DXGI_ERROR_ACCESS_LOST) {
                 std::cerr << "Desktop duplication access lost, reinitializing..." << std::endl;
                 try {
-                    duplication->ReleaseFrame();
+                    dup->ReleaseFrame();
                 } catch (...) {
                     // 忽略可能的异常
                 }
-                duplication.Reset();
+                duplication = nullptr;
                 setupDesktopDuplication();
             } else {
                 std::cerr << "Failed to acquire next frame: " << std::hex << hr << std::endl;
@@ -279,7 +337,7 @@ bool ScreenCapture::captureFrame(CaptureFrame& frame) {
         hr = resource.As(&srcTexture);
         if (FAILED(hr)) {
             std::cerr << "Failed to get texture from resource" << std::endl;
-            duplication->ReleaseFrame();
+            dup->ReleaseFrame();
             return false;
         }
 
@@ -292,8 +350,8 @@ bool ScreenCapture::captureFrame(CaptureFrame& frame) {
         srcBox.bottom = cropY + outputHeight;
         srcBox.back = 1;
 
-        d3d11Context->CopySubresourceRegion(
-            outputTexture.Get(),
+        context->CopySubresourceRegion(
+            outTexture,
             0,
             0, 0, 0,
             srcTexture.Get(),
@@ -302,11 +360,11 @@ bool ScreenCapture::captureFrame(CaptureFrame& frame) {
         );
 
         // 释放帧
-        duplication->ReleaseFrame();
+        dup->ReleaseFrame();
 
         // 填充帧信息
-        frame.texture = outputTexture;
-        frame.resource = resource;
+        frame.texture = outTexture;
+        frame.resource = resource.Detach();
         frame.timestamp = std::chrono::duration_cast<std::chrono::milliseconds>(
             std::chrono::system_clock::now().time_since_epoch()
         ).count();
@@ -317,7 +375,8 @@ bool ScreenCapture::captureFrame(CaptureFrame& frame) {
         std::cerr << "Error capturing frame: " << e.what() << std::endl;
         try {
             if (duplication) {
-                duplication->ReleaseFrame();
+                IDXGIOutputDuplication* dup = static_cast<IDXGIOutputDuplication*>(duplication);
+                dup->ReleaseFrame();
             }
         } catch (...) {
             // 忽略可能的异常

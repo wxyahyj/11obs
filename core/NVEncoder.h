@@ -1,9 +1,13 @@
 #pragma once
 
-#include <d3d11.h>
 #include <vector>
 #include <cstdint>
 #include <string>
+
+// 前向声明，避免直接依赖DirectX头文件
+class ID3D11Device;
+class ID3D11DeviceContext;
+class ID3D11Texture2D;
 
 // NVIDIA Video Codec SDK头文件
 // 注意：需要安装NVIDIA Video Codec SDK并配置正确的包含路径
@@ -17,7 +21,7 @@ public:
     ~NVEncoder();
 
     bool initialize(
-        ID3D11Device* device,
+        void* device,
         int width,
         int height,
         int fps,
@@ -27,7 +31,7 @@ public:
     void cleanup();
 
     bool encode(
-        ID3D11Texture2D* inputTexture,
+        void* inputTexture,
         std::vector<uint8_t>& output
     );
 
@@ -43,8 +47,8 @@ private:
     bool createBitstreamBuffer();
 
 private:
-    ID3D11Device* d3d11Device = nullptr;
-    ID3D11DeviceContext* d3d11Context = nullptr;
+    void* d3d11Device = nullptr;
+    void* d3d11Context = nullptr;
 
     int width = 0;
     int height = 0;
@@ -55,14 +59,14 @@ private:
 
     // NVENC相关
 #ifdef NVENC_AVAILABLE
-    NV_ENCODE_API_FUNCTION_LIST* nvencEncoder = nullptr;
+    void* nvencEncoder = nullptr;
     void* nvencInputResource = nullptr;
     void* nvencMappedResource = nullptr;
     void* nvencBitstreamBuffer = nullptr;
 
     // 编码参数
-    NV_ENC_INITIALIZE_PARAMS* initParams = nullptr;
-    NV_ENC_CONFIG* encodeConfig = nullptr;
+    void* initParams = nullptr;
+    void* encodeConfig = nullptr;
 #else
     void* nvencEncoder = nullptr;
     void* nvencInputResource = nullptr;

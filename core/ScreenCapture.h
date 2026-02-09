@@ -1,18 +1,22 @@
 #pragma once
 
-#include <d3d11.h>
-#include <dxgi1_2.h>
-#include <wrl/client.h>
 #include <cstdint>
 #include <memory>
+#include <vector>
 
-using Microsoft::WRL::ComPtr;
+// 前向声明，避免直接依赖DirectX头文件
+class ID3D11Device;
+class ID3D11DeviceContext;
+class ID3D11Texture2D;
+class IDXGIOutputDuplication;
+class IDXGIOutput;
+class IDXGIResource;
 
 class ScreenCapture {
 public:
     struct CaptureFrame {
-        ComPtr<ID3D11Texture2D> texture;
-        ComPtr<IDXGIResource> resource;
+        void* texture; // 简化为void*，避免DirectX依赖
+        void* resource; // 简化为void*，避免DirectX依赖
         uint64_t timestamp;
         int frameIndex;
     };
@@ -25,8 +29,7 @@ public:
     bool captureFrame(CaptureFrame& frame);
     void releaseFrame(const CaptureFrame& frame);
 
-    ID3D11Device* getDevice() const { return d3d11Device.Get(); }
-    ID3D11DeviceContext* getContext() const { return d3d11Context.Get(); }
+    void* getDevice() const { return d3d11Device; }
     int getWidth() const { return outputWidth; }
     int getHeight() const { return outputHeight; }
 
@@ -36,16 +39,12 @@ private:
     bool createOutputTexture();
 
 private:
-    // D3D11设备和上下文
-    ComPtr<ID3D11Device> d3d11Device;
-    ComPtr<ID3D11DeviceContext> d3d11Context;
-
-    // DXGI输出和复制接口
-    ComPtr<IDXGIOutputDuplication> duplication;
-    ComPtr<IDXGIOutput> dxgiOutput;
-
-    // 输出纹理（裁剪后的中心区域）
-    ComPtr<ID3D11Texture2D> outputTexture;
+    // 简化为void*，避免DirectX依赖
+    void* d3d11Device = nullptr;
+    void* d3d11Context = nullptr;
+    void* duplication = nullptr;
+    void* dxgiOutput = nullptr;
+    void* outputTexture = nullptr;
 
     // 输出尺寸
     int outputWidth = 0;

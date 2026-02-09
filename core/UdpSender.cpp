@@ -3,6 +3,14 @@
 #include <cstring>
 #include <stdexcept>
 
+// 确保Winsock头文件正确包含
+#ifdef _WIN32
+    #define WIN32_LEAN_AND_MEAN
+    #include <winsock2.h>
+    #include <ws2tcpip.h>
+    #pragma comment(lib, "ws2_32.lib")
+#endif
+
 UdpSender::UdpSender()
     : udpSocket(INVALID_SOCKET),
       connected(false),
