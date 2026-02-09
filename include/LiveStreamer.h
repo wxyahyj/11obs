@@ -54,7 +54,7 @@ private:
     
     // 无锁队列用于线程间通信
     LockFreeQueue<ScreenCapture::CaptureFrame> captureQueue;
-    LockFreeQueue<NVEncoder::EncodedFrame> encodeQueue;
+    LockFreeQueue<std::vector<uint8_t>> encodeQueue;
     
     // 线程
     std::thread captureThread;

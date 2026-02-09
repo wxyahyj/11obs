@@ -45,6 +45,7 @@ public:
     
     bool initialize(const std::string& serverIP, unsigned int serverPort, unsigned int maxPacketSize = 1400);
     bool sendFrame(const UDPFrame& frame);
+    bool sendFrame(const std::vector<uint8_t>& data);
     void stop();
     
     const std::string& getServerIP() const { return serverIP; }

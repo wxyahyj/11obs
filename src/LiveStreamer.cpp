@@ -29,15 +29,16 @@ bool LiveStreamer::initialize(const Config& config) {
     }
     
     // 初始化编码器
-    if (!encoder.initialize(
-        screenCapture.getDevice(),
-        screenCapture.getDeviceContext(),
-        config.outputWidth,
-        config.outputHeight,
-        config.frameRate,
-        config.bitrate
-    )) {
-        std::cerr << "Failed to initialize encoder" << std::endl;
+    try {
+        encoder = NVEncoder(
+            screenCapture.getDevice(),
+            config.outputWidth,
+            config.outputHeight,
+            config.frameRate,
+            config.bitrate
+        );
+    } catch (const std::exception& e) {
+        std::cerr << "Failed to initialize encoder: " << e.what() << std::endl;
         return false;
     }
     
@@ -118,15 +119,15 @@ void LiveStreamer::encodeThreadFunc() {
     while (running) {
         ScreenCapture::CaptureFrame captureFrame;
         if (captureQueue.pop(captureFrame)) {
-            NVEncoder::EncodedFrame encodeFrame;
-            if (encoder.encodeFrame(captureFrame.texture, encodeFrame)) {
+            std::vector<uint8_t> encodedData;
+            if (encoder.encode(captureFrame.texture, encodedData)) {
                 // 检查队列大小，避免缓冲过多
                 if (!encodeQueue.empty()) {
                     // 丢弃旧帧，保持实时性
-                    NVEncoder::EncodedFrame oldFrame;
-                    encodeQueue.pop(oldFrame);
+                    std::vector<uint8_t> oldData;
+                    encodeQueue.pop(oldData);
                 }
-                encodeQueue.push(encodeFrame);
+                encodeQueue.push(encodedData);
             }
         }
         
@@ -137,14 +138,10 @@ void LiveStreamer::encodeThreadFunc() {
 
 void LiveStreamer::transmitThreadFunc() {
     while (running) {
-        NVEncoder::EncodedFrame encodeFrame;
-        if (encodeQueue.pop(encodeFrame)) {
-            UDPTransmitter::UDPFrame udpFrame;
-            udpFrame.data = std::move(encodeFrame.data);
-            udpFrame.frameId = encodeFrame.frameId;
-            udpFrame.timestamp = encodeFrame.timestamp;
-            
-            transmitter.sendFrame(udpFrame);
+        std::vector<uint8_t> encodedData;
+        if (encodeQueue.pop(encodedData)) {
+            // 直接发送H.264裸流
+            transmitter.sendFrame(encodedData);
         }
         
         // 短暂睡眠，避免CPU占用过高

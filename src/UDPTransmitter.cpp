@@ -123,6 +123,74 @@ bool UDPTransmitter::sendFrame(const UDPFrame& frame) {
     return true;
 }
 
+bool UDPTransmitter::sendFrame(const std::vector<uint8_t>& data) {
+    if (!running || sock == INVALID_SOCKET) {
+        return false;
+    }
+    
+    // 计算数据包大小
+    unsigned int headerSize = sizeof(PacketHeader);
+    unsigned int payloadSize = maxPacketSize - headerSize;
+    
+    // 计算分包数量
+    unsigned int packetCount = (data.size() + payloadSize - 1) / payloadSize;
+    
+    // 生成帧ID和时间戳
+    static uint32_t frameIdCounter = 0;
+    uint32_t frameId = frameIdCounter++;
+    uint64_t timestamp = std::chrono::duration_cast<std::chrono::microseconds>(
+        std::chrono::high_resolution_clock::now().time_since_epoch()
+    ).count();
+    
+    // 发送所有数据包
+    for (unsigned int i = 0; i < packetCount; i++) {
+        // 计算当前包的偏移量和大小
+        unsigned int offset = i * payloadSize;
+        unsigned int currentPayloadSize = std::min(payloadSize, (unsigned int)(data.size() - offset));
+        
+        // 创建数据包
+        std::vector<uint8_t> packet(headerSize + currentPayloadSize);
+        
+        // 填充包头
+        PacketHeader* header = reinterpret_cast<PacketHeader*>(packet.data());
+        header->frameId = frameId;
+        header->packetId = static_cast<uint16_t>(i);
+        header->packetCount = static_cast<uint16_t>(packetCount);
+        header->timestamp = timestamp;
+        
+        // 填充负载
+        memcpy(packet.data() + headerSize, data.data() + offset, currentPayloadSize);
+        
+        // 发送数据包
+        int result = sendto(
+            sock,
+            reinterpret_cast<const char*>(packet.data()),
+            packet.size(),
+            0,
+            reinterpret_cast<const sockaddr*>(&serverAddr),
+            sizeof(serverAddr)
+        );
+        
+        if (result == SOCKET_ERROR) {
+            int error = WSAGetLastError();
+            // 非阻塞模式下的WSAEWOULDBLOCK错误是正常的，其他错误需要处理
+            if (error != WSAEWOULDBLOCK) {
+                std::cerr << "Failed to send packet: " << error << std::endl;
+                // 直接返回失败，丢弃整个帧
+                return false;
+            }
+        }
+        
+        // 简单的流量控制：如果发送缓冲区满了，稍微延迟一下
+        if (result == SOCKET_ERROR && WSAGetLastError() == WSAEWOULDBLOCK) {
+            // 短暂睡眠，避免CPU占用过高
+            Sleep(1);
+        }
+    }
+    
+    return true;
+}
+
 void UDPTransmitter::stop() {
     running = false;
     
