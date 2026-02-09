@@ -22,20 +22,33 @@ jobs:
         git fetch origin main
         git checkout main
 
-    - name: Install dependencies
+    - name: Download ImGui
       run: |
-        # 安装必要的依赖
-        echo "Installing dependencies..."
+        # 下载ImGui
+        echo "Downloading ImGui..."
+        Invoke-WebRequest -Uri "https://github.com/ocornut/imgui/archive/refs/tags/v1.90.6.zip" -OutFile "imgui.zip"
+        Expand-Archive -Path "imgui.zip" -DestinationPath "."
+        Move-Item "imgui-1.90.6" "imgui"
+        Remove-Item "imgui.zip"
 
-    - name: Build solution
+    - name: Create imgui directory structure
       run: |
-        # 使用MSBuild构建解决方案
-        msbuild LowLatencyStreamer.sln /p:Configuration=Release /p:Platform=x64
+        # 创建imgui目录结构
+        if (-not (Test-Path "imgui")) {
+          New-Item -ItemType Directory -Path "imgui" -Force
+        }
+
+    - name: Build project
+      run: |
+        # 使用MSBuild构建项目
+        # 注意：由于GitHub Actions环境没有NVIDIA GPU和NVENC SDK，
+        # 我们使用条件编译，当NVENC不可用时使用简化实现
+        msbuild UDPStreamer.vcxproj /p:Configuration=Release /p:Platform=x64 /p:NVENC_AVAILABLE=0
 
     - name: Verify build
       run: |
         # 检查构建结果
-        if (Test-Path "x64\Release\LowLatencyStreamer.exe") {
+        if (Test-Path "x64\Release\UDPStreamer.exe") {
           echo "Build successful!"
         } else {
           echo "Build failed!"
@@ -45,6 +58,19 @@ jobs:
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
-        name: LowLatencyStreamer
-        path: x64\Release\LowLatencyStreamer.exe
+        name: UDPStreamer
+        path: x64\Release\UDPStreamer.exe
         retention-days: 7
+
+    - name: Build summary
+      run: |
+        # 构建摘要
+        echo "## Build Summary" >> $env:GITHUB_STEP_SUMMARY
+        echo "" >> $env:GITHUB_STEP_SUMMARY
+        echo "- **Project**: UDPStreamer" >> $env:GITHUB_STEP_SUMMARY
+        echo "- **Configuration**: Release | x64" >> $env:GITHUB_STEP_SUMMARY
+        echo "- **Build Status**: Success" >> $env:GITHUB_STEP_SUMMARY
+        echo "" >> $env:GITHUB_STEP_SUMMARY
+        echo "### Notes" >> $env:GITHUB_STEP_SUMMARY
+        echo "- This build uses a simplified implementation without NVENC SDK" >> $env:GITHUB_STEP_SUMMARY
+        echo "- For full NVENC support, build locally with NVIDIA GPU and SDK" >> $env:GITHUB_STEP_SUMMARY
