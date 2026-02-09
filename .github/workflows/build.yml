@@ -1,0 +1,43 @@
+name: Build
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: windows-2022
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Visual Studio environment
+      uses: ilammy/msvc-dev-cmd@v1
+
+    - name: Install dependencies
+      run: |
+        # 安装必要的依赖
+        echo "Installing dependencies..."
+
+    - name: Build solution
+      run: |
+        # 使用MSBuild构建解决方案
+        msbuild LowLatencyStreamer.sln /p:Configuration=Release /p:Platform=x64
+
+    - name: Verify build
+      run: |
+        # 检查构建结果
+        if (Test-Path "x64\Release\LowLatencyStreamer.exe") {
+          echo "Build successful!"
+        } else {
+          echo "Build failed!"
+          exit 1
+        }
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: LowLatencyStreamer
+        path: x64\Release\LowLatencyStreamer.exe

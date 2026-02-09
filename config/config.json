@@ -1,0 +1,16 @@
+{
+  "capture": {
+    "displayIndex": 0,
+    "outputWidth": 640,
+    "outputHeight": 640
+  },
+  "encode": {
+    "frameRate": 200,
+    "bitrate": 15000
+  },
+  "transmit": {
+    "serverIP": "127.0.0.1",
+    "serverPort": 5000,
+    "maxPacketSize": 1400
+  }
+}
