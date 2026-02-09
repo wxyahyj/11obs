@@ -3,6 +3,13 @@
 #include <d3d11.h>
 #include <vector>
 #include <cstdint>
+#include <string>
+
+// NVIDIA Video Codec SDK头文件
+// 注意：需要安装NVIDIA Video Codec SDK并配置正确的包含路径
+#ifdef NVENC_AVAILABLE
+    #include <nvEncodeAPI.h>
+#endif
 
 class NVEncoder {
 public:
@@ -27,6 +34,7 @@ public:
     bool isInitialized() const { return initialized; }
     int getWidth() const { return width; }
     int getHeight() const { return height; }
+    std::string getLastError() const { return lastError; }
 
 private:
     bool createEncoderSession();
@@ -46,6 +54,16 @@ private:
     bool initialized = false;
 
     // NVENC相关
+#ifdef NVENC_AVAILABLE
+    NV_ENCODE_API_FUNCTION_LIST* nvencEncoder = nullptr;
+    void* nvencInputResource = nullptr;
+    void* nvencMappedResource = nullptr;
+    void* nvencBitstreamBuffer = nullptr;
+
+    // 编码参数
+    NV_ENC_INITIALIZE_PARAMS* initParams = nullptr;
+    NV_ENC_CONFIG* encodeConfig = nullptr;
+#else
     void* nvencEncoder = nullptr;
     void* nvencInputResource = nullptr;
     void* nvencMappedResource = nullptr;
@@ -54,7 +72,11 @@ private:
     // 编码参数
     void* encodeConfig = nullptr;
     void* initParams = nullptr;
+#endif
 
     // 帧计数
     int frameCount = 0;
+    
+    // 错误信息
+    std::string lastError;
 };

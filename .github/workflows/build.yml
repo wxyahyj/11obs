@@ -22,51 +22,64 @@ jobs:
         git fetch origin main
         git checkout main
 
-    - name: Download ImGui
+    - name: Verify ImGui dependencies
       run: |
-        # 下载ImGui
-        echo "Downloading ImGui..."
-        Invoke-WebRequest -Uri "https://github.com/ocornut/imgui/archive/refs/tags/v1.90.6.zip" -OutFile "imgui.zip"
-        Expand-Archive -Path "imgui.zip" -DestinationPath "."
-        Move-Item "imgui-1.90.6" "imgui"
-        Remove-Item "imgui.zip"
+        # 验证ImGui文件是否存在
+        echo "Verifying ImGui dependencies..."
         
-        # 验证ImGui文件
+        # 检查核心ImGui文件
         if (Test-Path "imgui\imgui.h") {
-          echo "ImGui downloaded successfully"
+          echo "✓ imgui.h found"
         } else {
-          echo "Failed to download ImGui"
+          echo "✗ imgui.h not found"
           exit 1
         }
         
-        # 复制后端文件到imgui目录
-        if (Test-Path "imgui\backends\imgui_impl_win32.cpp") {
-          Copy-Item "imgui\backends\imgui_impl_win32.cpp" -Destination "imgui\"
-          Copy-Item "imgui\backends\imgui_impl_win32.h" -Destination "imgui\"
-          Copy-Item "imgui\backends\imgui_impl_dx11.cpp" -Destination "imgui\"
-          Copy-Item "imgui\backends\imgui_impl_dx11.h" -Destination "imgui\"
-          echo "Backend files copied successfully"
+        # 检查Win32后端文件
+        if (Test-Path "imgui\imgui_impl_win32.h") {
+          echo "✓ imgui_impl_win32.h found"
         } else {
-          echo "Backend files not found, checking alternative location..."
-          if (Test-Path "imgui\examples\imgui_impl_win32.cpp") {
-            Copy-Item "imgui\examples\imgui_impl_win32.cpp" -Destination "imgui\"
-            Copy-Item "imgui\examples\imgui_impl_win32.h" -Destination "imgui\"
-            Copy-Item "imgui\examples\imgui_impl_dx11.cpp" -Destination "imgui\"
-            Copy-Item "imgui\examples\imgui_impl_dx11.h" -Destination "imgui\"
-            echo "Backend files copied from examples directory"
-          }
+          echo "✗ imgui_impl_win32.h not found"
+          exit 1
+        }
+        
+        if (Test-Path "imgui\imgui_impl_win32.cpp") {
+          echo "✓ imgui_impl_win32.cpp found"
+        } else {
+          echo "✗ imgui_impl_win32.cpp not found"
+          exit 1
+        }
+        
+        # 检查DirectX 11后端文件
+        if (Test-Path "imgui\imgui_impl_dx11.h") {
+          echo "✓ imgui_impl_dx11.h found"
+        } else {
+          echo "✗ imgui_impl_dx11.h not found"
+          exit 1
+        }
+        
+        if (Test-Path "imgui\imgui_impl_dx11.cpp") {
+          echo "✓ imgui_impl_dx11.cpp found"
+        } else {
+          echo "✗ imgui_impl_dx11.cpp not found"
+          exit 1
         }
         
         # 列出imgui目录内容
+        echo ""
         echo "imgui directory contents:"
         Get-ChildItem "imgui" | Select-Object Name
+        
+        echo ""
+        echo "ImGui dependencies verified successfully!"
 
     - name: Build project
       run: |
         # 使用MSBuild构建项目
         # 注意：由于GitHub Actions环境没有NVIDIA GPU和NVENC SDK，
         # 我们使用条件编译，当NVENC不可用时使用简化实现
-        msbuild UDPStreamer.vcxproj /p:Configuration=Release /p:Platform=x64 /p:NVENC_AVAILABLE=0 /v:minimal 2>&1 | Tee-Object -FilePath build_output.txt
+        # 确保包含imgui目录下的所有源文件
+        msbuild UDPStreamer.vcxproj /p:Configuration=Release /p:Platform=x64 /p:NVENC_AVAILABLE=0 /p:AdditionalIncludeDirectories=imgui /v:minimal 2>&1 | Tee-Object -FilePath build_output.txt
 
     - name: Check build output
       if: always()
@@ -113,6 +126,12 @@ jobs:
         echo "- **Configuration**: Release | x64" >> $env:GITHUB_STEP_SUMMARY
         echo "- **Build Status**: Success" >> $env:GITHUB_STEP_SUMMARY
         echo "" >> $env:GITHUB_STEP_SUMMARY
+        echo "### Dependencies" >> $env:GITHUB_STEP_SUMMARY
+        echo "- **ImGui**: Included with custom Win32/DirectX11 backends" >> $env:GITHUB_STEP_SUMMARY
+        echo "- **DirectX 11**: Used for rendering and screen capture" >> $env:GITHUB_STEP_SUMMARY
+        echo "- **Winsock2**: Used for UDP network communication" >> $env:GITHUB_STEP_SUMMARY
+        echo "" >> $env:GITHUB_STEP_SUMMARY
         echo "### Notes" >> $env:GITHUB_STEP_SUMMARY
         echo "- This build uses a simplified implementation without NVENC SDK" >> $env:GITHUB_STEP_SUMMARY
         echo "- For full NVENC support, build locally with NVIDIA GPU and SDK" >> $env:GITHUB_STEP_SUMMARY
+        echo "- File size should be approximately 2-3MB for a complete build" >> $env:GITHUB_STEP_SUMMARY

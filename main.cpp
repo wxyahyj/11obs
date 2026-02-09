@@ -1,9 +1,13 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <d3d11.h>
-#include <imgui.h>
 #include <iostream>
 #include <thread>
+
+// ImGui includes
+#include "imgui/imgui.h"
+#include "imgui/imgui_impl_win32.h"
+#include "imgui/imgui_impl_dx11.h"
 
 #include "StreamConfig.h"
 #include "StreamController.h"
@@ -88,6 +92,10 @@ void CleanupDeviceD3D()
 // Win32窗口过程函数
 LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
+    // 处理ImGui消息
+    if (ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam))
+        return true;
+
     // 简单的窗口消息处理
     switch (msg)
     {
@@ -133,11 +141,37 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     ::UpdateWindow(hwnd);
 
     // 初始化ImGui
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    ImGuiIO& io = ImGui::GetIO(); (void)io;
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
+    try {
+        IMGUI_CHECKVERSION();
+        ImGui::CreateContext();
+        ImGuiIO& io = ImGui::GetIO(); (void)io;
+        io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+        io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
+
+        // 初始化ImGui后端
+        if (!ImGui_ImplWin32_Init(hwnd)) {
+            std::cerr << "Failed to initialize ImGui Win32 backend" << std::endl;
+            CleanupDeviceD3D();
+            ::DestroyWindow(hwnd);
+            ::UnregisterClassW(wc.lpszClassName, wc.hInstance);
+            return 1;
+        }
+
+        if (!ImGui_ImplDX11_Init(g_pd3dDevice, g_pd3dDeviceContext)) {
+            std::cerr << "Failed to initialize ImGui DirectX 11 backend" << std::endl;
+            ImGui_ImplWin32_Shutdown();
+            CleanupDeviceD3D();
+            ::DestroyWindow(hwnd);
+            ::UnregisterClassW(wc.lpszClassName, wc.hInstance);
+            return 1;
+        }
+    } catch (const std::exception& e) {
+        std::cerr << "Error initializing ImGui: " << e.what() << std::endl;
+        CleanupDeviceD3D();
+        ::DestroyWindow(hwnd);
+        ::UnregisterClassW(wc.lpszClassName, wc.hInstance);
+        return 1;
+    }
 
     // 设置ImGui样式
     ImGui::StyleColorsDark();
@@ -158,29 +192,40 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         if (done)
             break;
 
-        // 开始ImGui帧
-        ImGui::NewFrame();
+        try {
+            // 开始ImGui帧
+            ImGui_ImplDX11_NewFrame();
+            ImGui_ImplWin32_NewFrame();
+            ImGui::NewFrame();
 
-        // 更新统计信息
-        g_controller.updateStats();
+            // 更新统计信息
+            g_controller.updateStats();
 
-        // 绘制UI
-        g_mainWindow.draw(g_config, g_controller);
+            // 绘制UI
+            g_mainWindow.draw(g_config, g_controller);
 
-        // 渲染ImGui
-        ImGui::Render();
-        const float clear_color_with_alpha[4] = { 0.45f, 0.55f, 0.60f, 1.00f };
-        g_pd3dDeviceContext->OMSetRenderTargets(1, &g_mainRenderTargetView, nullptr);
-        g_pd3dDeviceContext->ClearRenderTargetView(g_mainRenderTargetView, clear_color_with_alpha);
+            // 渲染ImGui
+            ImGui::Render();
+            const float clear_color_with_alpha[4] = { 0.45f, 0.55f, 0.60f, 1.00f };
+            g_pd3dDeviceContext->OMSetRenderTargets(1, &g_mainRenderTargetView, nullptr);
+            g_pd3dDeviceContext->ClearRenderTargetView(g_mainRenderTargetView, clear_color_with_alpha);
+            ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 
-        // 呈现
-        g_pSwapChain->Present(1, 0);
+            // 呈现
+            g_pSwapChain->Present(1, 0);
+        } catch (const std::exception& e) {
+            std::cerr << "Error in main loop: " << e.what() << std::endl;
+            // 短暂暂停后继续
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        }
 
         // 控制帧率（60 FPS）
         std::this_thread::sleep_for(std::chrono::milliseconds(16));
     }
 
-    // 清理
+    // 清理ImGui后端
+    ImGui_ImplDX11_Shutdown();
+    ImGui_ImplWin32_Shutdown();
     ImGui::DestroyContext();
 
     CleanupDeviceD3D();
