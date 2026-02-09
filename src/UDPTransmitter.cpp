@@ -3,6 +3,10 @@
 #include <chrono>
 #include <algorithm>
 
+// 取消Windows宏定义，避免与std::min/std::max冲突
+#undef min
+#undef max
+
 UDPTransmitter::UDPTransmitter()
     : sock(INVALID_SOCKET),
       serverPort(0),
