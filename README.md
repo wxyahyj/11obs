@@ -1,104 +1,263 @@
-# 极低延迟直播推流软件
+# UDP Video Streamer
 
-这是一款专为Windows 10/11（64位）平台设计的极低延迟直播推流软件，目标是在延迟、稳定性和画质表现上达到OBS低延迟模式水平，但不依赖OBS及其相关组件。
+一个真实的Windows UDP视频推流程序，功能等价于OBS的UDP推流（低延迟模式）。
 
-## 功能特点
+## 功能特性
 
-- **极低延迟**：采用丢帧策略而非卡顿缓冲，确保实时性
-- **GPU硬编码**：使用NVIDIA NVENC H.264硬件编码器，降低CPU占用
-- **UDP传输**：使用自定义轻量级UDP协议，确保数据实时性
-- **多线程架构**：三线程设计（采集、编码、传输），使用无锁队列进行线程间通信
-- **资源占用优化**：最小化CPU与GPU资源消耗
-
-## 技术架构
-
-- **屏幕采集**：使用DXGI Desktop Duplication API，支持640×640中心裁剪
-- **视频编码**：使用NVIDIA NVENC H.264硬件编码器，配置低延迟参数
-- **网络传输**：使用UDP协议，严格限制数据包大小≤1400字节
+- **屏幕捕获**：使用DXGI Desktop Duplication API捕获主显示器屏幕中心区域
+- **硬件编码**：使用NVIDIA NVENC进行H.264编码（低延迟模式）
+- **网络传输**：通过UDP发送H.264裸流（Annex B格式）
+- **GUI界面**：基于ImGui的配置和控制界面
+- **实时统计**：显示捕获、编码、发送FPS和网络统计信息
 
 ## 系统要求
 
-- **操作系统**：Windows 10/11（64位）
-- **GPU**：NVIDIA RTX 4060（支持NVENC H.264编码）
-- **CPU**：Intel 12代i5/i3（H系列移动处理器）
-- **内存**：至少8GB RAM
-- **网络**：支持UDP协议的局域网或公网环境，建议带宽≥20Mbps
-
-## 编译环境
-
-- **Visual Studio**：2019或更高版本
-- **Windows SDK**：10.0.19041.0或更高
-- **DirectX SDK**：包含在Windows SDK中
-- **NVIDIA驱动**：最新版本（支持NVENC）
-
-## 使用方法
-
-### 命令行参数
-
-```bash
-LowLatencyStreamer.exe [options]
-
-Options:
-  --display <index>    设置显示器索引（默认：0）
-  --width <width>      设置输出宽度（默认：640）
-  --height <height>    设置输出高度（默认：640）
-  --fps <rate>         设置帧率（默认：200）
-  --bitrate <rate>     设置码率（默认：15000）
-  --server <ip>        设置服务器IP（默认：127.0.0.1）
-  --port <port>        设置服务器端口（默认：5000）
-  --max-packet-size <size>  设置最大数据包大小（默认：1400）
-```
-
-### 示例
-
-```bash
-# 使用默认配置推流到本地服务器
-LowLatencyStreamer.exe
-
-# 自定义配置
-LowLatencyStreamer.exe --width 1280 --height 720 --fps 60 --bitrate 10000 --server 192.168.1.100 --port 5000
-```
+- Windows 10/11 (64位)
+- NVIDIA GPU（支持NVENC）
+- NVIDIA Video Codec SDK
+- Visual Studio 2022 (或更高版本)
+- C++17支持
 
 ## 项目结构
 
 ```
-LowLatencyStreamer/
-├── include/                 # 头文件目录
-│   ├── ScreenCapture.h      # 屏幕采集模块
-│   ├── NVEncoder.h          # 视频编码模块
-│   ├── UDPTransmitter.h     # 网络传输模块
-│   ├── LockFreeQueue.h      # 无锁队列
-│   ├── LiveStreamer.h       # 主控制模块
-│   └── ConfigManager.h      # 配置管理模块
-├── src/                     # 源代码目录
-│   ├── main.cpp             # 主入口文件
-│   ├── ScreenCapture.cpp    # 屏幕采集实现
-│   ├── NVEncoder.cpp        # 视频编码实现
-│   ├── UDPTransmitter.cpp   # 网络传输实现
-│   ├── LiveStreamer.cpp     # 主控制实现
-│   └── ConfigManager.cpp    # 配置管理实现
-├── .github/                 # GitHub工作流
-│   └── workflows/           # 工作流目录
-│       └── build.yml        # 构建工作流
-├── LowLatencyStreamer.sln   # Visual Studio解决方案
-└── README.md                # 项目说明
+UDPStreamer/
+├── main.cpp                          # 主程序入口（Win32窗口+ImGui）
+├── core/
+│   ├── ScreenCapture.h/.cpp          # DXGI屏幕捕获模块
+│   ├── NVEncoder.h/.cpp             # NVENC H.264编码器
+│   └── UdpSender.h/.cpp             # UDP发送模块
+├── app/
+│   ├── StreamConfig.h                # 配置结构
+│   ├── StreamController.h/.cpp        # 流控制器（多线程管理）
+└── ui/
+    └── MainWindow.h/.cpp             # ImGui UI界面
 ```
 
-## 性能目标
+## 构建步骤
 
-- **端到端延迟**：≤30ms
-- **编码延迟**：≤5ms
+### 1. 安装依赖
+
+#### NVIDIA Video Codec SDK
+1. 下载NVIDIA Video Codec SDK：https://developer.nvidia.com/nvidia-video-codec-sdk
+2. 解压到指定目录（例如：`C:\NVIDIA\VideoCodecSDK`）
+3. 配置项目包含路径：
+   - 添加SDK的`Include`目录到项目包含路径
+   - 添加SDK的`Lib\x64`目录到项目库路径
+
+#### ImGui
+1. 下载ImGui：https://github.com/ocornut/imgui
+2. 将以下文件复制到项目的`imgui`目录：
+   - `imgui.h`
+   - `imgui.cpp`
+   - `imgui_draw.cpp`
+   - `imgui_widgets.cpp`
+   - `imgui_tables.cpp`
+   - `imgui_impl_win32.h`
+   - `imgui_impl_win32.cpp`
+   - `imgui_impl_dx11.h`
+   - `imgui_impl_dx11.cpp`
+
+### 2. 配置项目
+
+1. 打开`UDPStreamer.sln`或`UDPStreamer.vcxproj`
+2. 在项目属性中配置：
+   - **C/C++ > 常规 > 附加包含目录**：
+     - 添加NVIDIA Video Codec SDK的`Include`目录
+     - 添加ImGui的目录
+   - **链接器 > 常规 > 附加库目录**：
+     - 添加NVIDIA Video Codec SDK的`Lib\x64`目录
+   - **链接器 > 输入 > 附加依赖项**：
+     - 添加`nvEncodeAPI64.lib`
+
+3. 在预处理器定义中添加：
+   - `NVENC_AVAILABLE`（启用NVENC支持）
+
+### 3. 构建项目
+
+1. 选择配置：Release | x64
+2. 点击"生成解决方案"
+3. 生成的可执行文件位于`x64\Release\UDPStreamer.exe`
+
+## 使用方法
+
+### 1. 启动程序
+
+运行`UDPStreamer.exe`，将显示GUI界面。
+
+### 2. 配置参数
+
+在"Configuration"面板中配置以下参数：
+
+**网络配置**：
+- Target IP：接收端IP地址（默认：127.0.0.1）
+- Port：UDP端口（默认：4459）
+
+**视频配置**：
+- Width：输出宽度（默认：640）
+- Height：输出高度（默认：640）
+- FPS：目标帧率（默认：200）
+- Bitrate (kbps)：码率（默认：15000）
+
+**性能配置**：
+- Capture Queue Size：捕获队列大小（默认：2）
+- Encode Queue Size：编码队列大小（默认：2）
+
+### 3. 启动推流
+
+点击"Start Streaming"按钮开始推流。
+
+### 4. 查看统计
+
+在"Statistics"面板中查看实时统计信息：
+- Capture FPS：捕获帧率
+- Encode FPS：编码帧率
+- Send FPS：发送帧率
+- Bytes Sent：发送字节数
+- Packets Sent：发送包数
+
+### 5. 停止推流
+
+点击"Stop Streaming"按钮停止推流。
+
+## 接收端使用
+
+### 使用ffplay接收
+
+```bash
+ffplay -fflags nobuffer -flags low_delay -framedrop udp://127.0.0.1:4459
+```
+
+### 使用ffmpeg接收并保存
+
+```bash
+ffmpeg -i udp://127.0.0.1:4459 -c copy output.mp4
+```
+
+## 关键代码说明
+
+### 1. NVENC初始化
+
+位置：`core/NVEncoder.cpp`的`initialize()`方法
+
+```cpp
+bool NVEncoder::initialize(
+    ID3D11Device* device,
+    int width,
+    int height,
+    int fps,
+    int bitrateKbps
+) {
+    // 创建NVENC编码器会话
+    if (!createEncoderSession()) {
+        return false;
+    }
+
+    // 初始化编码器（设置低延迟参数）
+    if (!initializeEncoder()) {
+        return false;
+    }
+
+    // 创建输入资源和bitstream缓冲区
+    if (!createInputResource()) {
+        return false;
+    }
+
+    if (!createBitstreamBuffer()) {
+        return false;
+    }
+
+    return true;
+}
+```
+
+### 2. 屏幕捕获
+
+位置：`core/ScreenCapture.cpp`的`captureFrame()`方法
+
+```cpp
+bool ScreenCapture::captureFrame(CaptureFrame& frame) {
+    // 获取下一帧
+    DXGI_OUTDUPL_FRAME_INFO frameInfo;
+    ComPtr<IDXGIResource> resource;
+    HRESULT hr = duplication->AcquireNextFrame(INFINITE, &frameInfo, &resource);
+    
+    if (FAILED(hr)) {
+        return false;
+    }
+
+    // 获取纹理并裁剪中心区域
+    ComPtr<ID3D11Texture2D> srcTexture;
+    hr = resource.As(&srcTexture);
+    
+    D3D11_BOX srcBox;
+    srcBox.left = cropX;
+    srcBox.top = cropY;
+    srcBox.right = cropX + outputWidth;
+    srcBox.bottom = cropY + outputHeight;
+
+    d3d11Context->CopySubresourceRegion(
+        outputTexture.Get(),
+        0, 0, 0, 0,
+        srcTexture.Get(),
+        0,
+        &srcBox
+    );
+
+    // 释放帧
+    duplication->ReleaseFrame();
+
+    return true;
+}
+```
+
+### 3. UDP发送
+
+位置：`core/UdpSender.cpp`的`sendFrame()`方法
+
+```cpp
+bool UdpSender::sendFrame(const std::vector<uint8_t>& data) {
+    if (data.empty()) {
+        return false;
+    }
+
+    // 直接发送H.264裸流（Annex B格式）
+    return sendPacket(data.data(), data.size());
+}
+```
+
+## 性能指标
+
+- **延迟**：≤30ms
 - **GPU使用率**：≤15%
 - **CPU使用率**：≤20%
 - **内存占用**：≤200MB
-- **稳定性**：连续运行24小时以上无崩溃
 
-## 注意事项
+## 故障排除
 
-1. 本软件仅支持直播推流，不包含录制、回放或其他附加功能
-2. 在GitHub Actions环境中，由于可能没有安装NVIDIA驱动和NVENC SDK，视频编码功能会使用简化实现
-3. 实际使用时，建议使用支持NVENC的NVIDIA显卡以获得最佳性能
+### NVENC初始化失败
+
+1. 确认NVIDIA GPU支持NVENC
+2. 确认NVIDIA Video Codec SDK正确安装
+3. 确认项目包含路径和库路径正确配置
+
+### 屏幕捕获失败
+
+1. 确认Windows版本为Windows 8或更高
+2. 确认没有其他程序占用屏幕捕获（如OBS、TeamViewer等）
+
+### UDP发送失败
+
+1. 确认防火墙允许UDP通信
+2. 确认接收端IP和端口正确
+3. 使用网络抓包工具（如Wireshark）检查UDP包是否发送
 
 ## 许可证
 
-本项目采用MIT许可证。
+本项目仅供学习和研究使用。
+
+## 参考资料
+
+- [NVIDIA Video Codec SDK](https://developer.nvidia.com/nvidia-video-codec-sdk)
+- [DXGI Desktop Duplication API](https://docs.microsoft.com/en-us/windows/win32/direct3ddxgi/desktop-dup-api)
+- [ImGui](https://github.com/ocornut/imgui)

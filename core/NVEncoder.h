@@ -2,17 +2,14 @@
 
 #include <d3d11.h>
 #include <vector>
-
-// 尝试包含NVENC头文件，如果不可用则使用简化实现
-#ifdef _WIN32
-    #ifdef NVENC_AVAILABLE
-        #include <nvEncodeAPI.h>
-    #endif
-#endif
+#include <cstdint>
 
 class NVEncoder {
 public:
-    NVEncoder(
+    NVEncoder();
+    ~NVEncoder();
+
+    bool initialize(
         ID3D11Device* device,
         int width,
         int height,
@@ -20,27 +17,44 @@ public:
         int bitrateKbps
     );
 
-    ~NVEncoder();
+    void cleanup();
 
     bool encode(
         ID3D11Texture2D* inputTexture,
         std::vector<uint8_t>& output
     );
 
-private:
-    bool initNVENC();
+    bool isInitialized() const { return initialized; }
+    int getWidth() const { return width; }
+    int getHeight() const { return height; }
 
 private:
-    ID3D11Device* d3d11Device;
-    int width;
-    int height;
-    int fps;
-    int bitrate;
+    bool createEncoderSession();
+    bool initializeEncoder();
+    bool createInputResource();
+    bool createBitstreamBuffer();
 
-#ifdef NVENC_AVAILABLE
+private:
+    ID3D11Device* d3d11Device = nullptr;
+    ID3D11DeviceContext* d3d11Context = nullptr;
+
+    int width = 0;
+    int height = 0;
+    int fps = 0;
+    int bitrate = 0;
+
+    bool initialized = false;
+
+    // NVENC相关
     void* nvencEncoder = nullptr;
-    NV_ENCODE_API_FUNCTION_LIST nvenc = {};
-    NV_ENC_INITIALIZE_PARAMS initParams = {};
-    NV_ENC_CONFIG encodeConfig = {};
-#endif
+    void* nvencInputResource = nullptr;
+    void* nvencMappedResource = nullptr;
+    void* nvencBitstreamBuffer = nullptr;
+
+    // 编码参数
+    void* encodeConfig = nullptr;
+    void* initParams = nullptr;
+
+    // 帧计数
+    int frameCount = 0;
 };
