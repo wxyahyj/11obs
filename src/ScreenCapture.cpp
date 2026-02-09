@@ -57,12 +57,20 @@ bool ScreenCapture::initialize(unsigned int displayIndex, unsigned int outWidth,
         return false;
     }
     
-    // 直接创建DXGI工厂1接口
-    IDXGIFactory1* dxgiFactory = nullptr;
-    hr = CreateDXGIFactory1(__uuidof(IDXGIFactory1), (void**)&dxgiFactory);
+    // 直接创建DXGI工厂2接口
+    IDXGIFactory2* dxgiFactory = nullptr;
+    hr = CreateDXGIFactory2(0, __uuidof(IDXGIFactory2), (void**)&dxgiFactory);
     if (FAILED(hr)) {
-        std::cerr << "Failed to create DXGI factory1: " << hr << std::endl;
-        return false;
+        // 如果创建IDXGIFactory2失败，尝试创建IDXGIFactory1
+        hr = CreateDXGIFactory1(__uuidof(IDXGIFactory1), (void**)&dxgiFactory);
+        if (FAILED(hr)) {
+            // 如果创建IDXGIFactory1失败，尝试创建IDXGIFactory
+            hr = CreateDXGIFactory(__uuidof(IDXGIFactory), (void**)&dxgiFactory);
+            if (FAILED(hr)) {
+                std::cerr << "Failed to create DXGI factory: " << hr << std::endl;
+                return false;
+            }
+        }
     }
     
     // 获取显示输出
