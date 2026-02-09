@@ -6,7 +6,7 @@
 #include <charconv>
 #include <cmath>
 #include <cstddef>
-#include <cstdint>
+#include <stdint.h>
 #include <cstring>
 #include <deque>
 #include <forward_list>
@@ -27,6 +27,8 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
+
+using namespace std;
 
 // nlohmann/json v3.11.2
 // 简化版本，仅包含基本功能

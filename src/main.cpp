@@ -3,6 +3,8 @@
 #include <iostream>
 #include <string>
 
+using namespace std;
+
 int main(int argc, char* argv[]) {
     std::cout << "Low Latency Live Streamer for Windows" << std::endl;
     std::cout << "=====================================" << std::endl;

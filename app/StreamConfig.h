@@ -1,7 +1,6 @@
 #pragma once
 
-#include <cstdint>
-#include <string>
+#include <stdint.h>
 
 struct StreamConfig {
     // 网络配置

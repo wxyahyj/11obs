@@ -12,6 +12,8 @@
 #include <atomic>
 #include <string>
 
+using namespace std;
+
 class LiveStreamer {
 public:
     // 配置参数

@@ -2,7 +2,9 @@
 
 #include <string>
 #include <vector>
-#include <cstdint>
+#include <stdint.h>
+
+using namespace std;
 
 // 确保Winsock头文件正确包含
 #ifdef _WIN32

@@ -1,0 +1,21 @@
+CompileFlags:
+  Add:
+    - -I.
+    - -I./include
+    - -I./app
+    - -I./core
+    - -I./imgui
+    - -I./src
+    - -I./ui
+    - --target=x86_64-pc-windows-msvc
+    - -DWIN32_LEAN_AND_MEAN
+    - -D_WINDOWS
+    - -D_UNICODE
+    - -DUNICODE
+    - -std=c++17
+
+Diagnostics:
+  ClangTidy:
+    Add: []
+    Remove: []
+    CheckOptions: {}

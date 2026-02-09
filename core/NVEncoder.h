@@ -1,8 +1,10 @@
 #pragma once
 
 #include <vector>
-#include <cstdint>
+#include <stdint.h>
 #include <string>
+
+using namespace std;
 
 // 前向声明，避免直接依赖DirectX头文件
 class ID3D11Device;

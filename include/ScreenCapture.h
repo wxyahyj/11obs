@@ -4,7 +4,7 @@
 #define WIN32_LEAN_AND_MEAN
 #define _WINSOCKAPI_
 
-#include <cstdint>
+#include <stdint.h>
 #include <d3d11.h>
 #include <dxgi1_2.h>
 #include <vector>
