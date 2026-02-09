@@ -34,7 +34,6 @@
 #include <stdint.h>
 #include <string.h>
 #include <vector>
-#include <cstring>
 
 //---- Forward declarations
 struct ImDrawCmd;       // Draw command list (list of ImDrawCmd)
@@ -59,31 +58,35 @@ struct ImGuiWindowClass; // Window class
 //---- Basic types
 typedef unsigned int ImU32;
 typedef unsigned short ImWchar;
-typedef signed char ImS8;   // 8-bit signed integer
-typedef unsigned char ImU8; // 8-bit unsigned integer
-typedef signed short ImS16; // 16-bit signed integer
-typedef unsigned short ImU16; // 16-bit unsigned integer
-typedef signed int ImS32;   // 32-bit signed integer
-typedef signed long long ImS64; // 64-bit signed integer
-typedef unsigned long long ImU64; // 64-bit unsigned integer
-typedef ImU32 ImGuiID;      // Unique ID used by widgets
-typedef int ImGuiDragDropFlags; // Drag and drop flags
 
-//---- Math/Geometry structures
-struct ImVec2 {
-    float x, y;
-    ImVec2() { x = y = 0.0f; }
-    ImVec2(float _x, float _y) { x = _x; y = _y; }
-    float operator[] (size_t idx) const { return (&x)[idx]; }
-    float& operator[] (size_t idx) { return (&x)[idx]; }
-};
+//---- Vector template
+template<typename T>
+struct ImVector
+{
+    int Size;
+    int Capacity;
+    T* Data;
 
-struct ImVec4 {
-    float x, y, z, w;
-    ImVec4() { x = y = z = w = 0.0f; }
-    ImVec4(float _x, float _y, float _z, float _w) { x = _x; y = _y; z = _z; w = _w; }
-    float operator[] (size_t idx) const { return (&x)[idx]; }
-    float& operator[] (size_t idx) { return (&x)[idx]; }
+    typedef T                   value_type;
+    typedef value_type*         iterator;
+    typedef const value_type*   const_iterator;
+
+    inline bool         empty() const                     { return Size == 0; }
+    inline int          size() const                      { return Size; }
+    inline int          capacity() const                  { return Capacity; }
+    inline T&           operator[](int i)                 { IM_ASSERT(i >= 0 && i < Size); return Data[i]; }
+    inline const T&     operator[](int i) const           { IM_ASSERT(i >= 0 && i < Size); return Data[i]; }
+    
+    inline void         clear()                           { if (Data) { Size = Capacity = 0; } }
+    inline T*           begin()                           { return Data; }
+    inline const T*     begin() const                     { return Data; }
+    inline T*           end()                             { return Data + Size; }
+    inline const T*     end() const                       { return Data + Size; }
+    inline T&           front()                           { IM_ASSERT(Size > 0); return Data[0]; }
+    inline const T&     front() const                     { IM_ASSERT(Size > 0); return Data[0]; }
+    inline T&           back()                            { IM_ASSERT(Size > 0); return Data[Size - 1]; }
+    inline const T&     back() const                      { IM_ASSERT(Size > 0); return Data[Size - 1]; }
+    inline void         swap(ImVector<T>& rhs)            { int rhs_size = rhs.Size; rhs.Size = Size; Size = rhs_size; int rhs_cap = rhs.Capacity; rhs.Capacity = Capacity; Capacity = rhs_cap; T* rhs_data = rhs.Data; rhs.Data = Data; Data = rhs_data; }
 };
 
 //---- Enumerations
@@ -665,14 +668,8 @@ struct ImDrawCmd {
     ImDrawCmdFlags flags;
     void (*user_callback)(const ImDrawList* parent_list, const ImDrawCmd* cmd);
     void* user_callback_data;
-};
 
-// Draw list shared data
-struct ImDrawListSharedData {
-    ImDrawListSharedData() : tex_uvscale(1.0f, 1.0f), tex_uvoffset(0.0f, 0.0f), clip_rectFullscreen(0.0f, 0.0f, 0.0f, 0.0f) {}
-    ImVec2 tex_uvscale;
-    ImVec2 tex_uvoffset;
-    ImVec4 clip_rectFullscreen;
+    ImDrawCmd() { memset(this, 0, sizeof(*this)); } // Initialize all members to zero
 };
 
 // Draw list
@@ -735,21 +732,8 @@ struct ImFontConfig {
     float RasterizerMultiply;
     int RasterizerFlags;
     ImWchar EllipsisChar;
-};
 
-// Custom rectangle for font atlas
-struct ImFontAtlasCustomRect {
-    unsigned short Width, Height;
-    unsigned short X, Y;
-    unsigned int GlyphID;
-    float AdvanceX;
-    float PosX, PosY;
-    float U0, V0, U1, V1;
-    bool GlyphColored;
-    void* UserData;
-    
-    ImFontAtlasCustomRect() { Width = Height = 0; X = Y = 0xFFFF; GlyphID = 0; AdvanceX = 0.0f; PosX = PosY = U0 = V0 = U1 = V1 = 0.0f; GlyphColored = false; UserData = nullptr; }
-    bool IsPacked() const { return X != 0xFFFF; }
+    ImFontConfig() { memset(this, 0, sizeof(*this)); } // Initialize all members to zero
 };
 
 // Font atlas
