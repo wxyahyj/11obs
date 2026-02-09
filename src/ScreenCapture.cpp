@@ -73,13 +73,39 @@ bool ScreenCapture::initialize(unsigned int displayIndex, unsigned int outWidth,
         return false;
     }
     
-    IDXGIFactory* dxgiFactory = nullptr;
-    hr = dxgiAdapter->GetParent(__uuidof(IDXGIFactory), (void**)&dxgiFactory);
-    dxgiAdapter->Release();
+    // 尝试获取最新的DXGI工厂接口
+    IDXGIFactory6* dxgiFactory = nullptr;
+    hr = dxgiAdapter->GetParent(__uuidof(IDXGIFactory6), (void**)&dxgiFactory);
     if (FAILED(hr)) {
-        std::cerr << "Failed to get DXGI factory: " << hr << std::endl;
-        return false;
+        // 如果获取IDXGIFactory6失败，尝试获取IDXGIFactory5
+        hr = dxgiAdapter->GetParent(__uuidof(IDXGIFactory5), (void**)&dxgiFactory);
+        if (FAILED(hr)) {
+            // 如果获取IDXGIFactory5失败，尝试获取IDXGIFactory4
+            hr = dxgiAdapter->GetParent(__uuidof(IDXGIFactory4), (void**)&dxgiFactory);
+            if (FAILED(hr)) {
+                // 如果获取IDXGIFactory4失败，尝试获取IDXGIFactory3
+                hr = dxgiAdapter->GetParent(__uuidof(IDXGIFactory3), (void**)&dxgiFactory);
+                if (FAILED(hr)) {
+                    // 如果获取IDXGIFactory3失败，尝试获取IDXGIFactory2
+                    hr = dxgiAdapter->GetParent(__uuidof(IDXGIFactory2), (void**)&dxgiFactory);
+                    if (FAILED(hr)) {
+                        // 如果获取IDXGIFactory2失败，尝试获取IDXGIFactory1
+                        hr = dxgiAdapter->GetParent(__uuidof(IDXGIFactory1), (void**)&dxgiFactory);
+                        if (FAILED(hr)) {
+                            // 如果获取IDXGIFactory1失败，尝试获取IDXGIFactory
+                            hr = dxgiAdapter->GetParent(__uuidof(IDXGIFactory), (void**)&dxgiFactory);
+                            if (FAILED(hr)) {
+                                dxgiAdapter->Release();
+                                std::cerr << "Failed to get DXGI factory: " << hr << std::endl;
+                                return false;
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
+    dxgiAdapter->Release();
     
     // 获取显示输出
     IDXGIOutput* dxgiOutput = nullptr;
