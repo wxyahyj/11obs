@@ -27,6 +27,21 @@ StreamConfig g_config;
 StreamController g_controller;
 MainWindow g_mainWindow;
 
+// 创建渲染目标视图
+void CreateRenderTarget()
+{
+    ID3D11Texture2D* pBackBuffer;
+    g_pSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (LPVOID*)&pBackBuffer);
+    g_pd3dDevice->CreateRenderTargetView(pBackBuffer, nullptr, &g_mainRenderTargetView);
+    pBackBuffer->Release();
+}
+
+// 清理渲染目标视图
+void CleanupRenderTarget()
+{
+    if (g_mainRenderTargetView) { g_mainRenderTargetView->Release(); g_mainRenderTargetView = nullptr; }
+}
+
 // 创建D3D11设备和交换链
 bool CreateDeviceD3D(HWND hWnd) {
     DXGI_SWAP_CHAIN_DESC sd;
@@ -63,15 +78,6 @@ bool CreateDeviceD3D(HWND hWnd) {
     return true;
 }
 
-// 创建渲染目标视图
-void CreateRenderTarget()
-{
-    ID3D11Texture2D* pBackBuffer;
-    g_pSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (LPVOID*)&pBackBuffer);
-    g_pd3dDevice->CreateRenderTargetView(pBackBuffer, nullptr, &g_mainRenderTargetView);
-    pBackBuffer->Release();
-}
-
 // 清理D3D11资源
 void CleanupDeviceD3D()
 {
@@ -79,12 +85,6 @@ void CleanupDeviceD3D()
     if (g_pSwapChain) { g_pSwapChain->Release(); g_pSwapChain = nullptr; }
     if (g_pd3dDeviceContext) { g_pd3dDeviceContext->Release(); g_pd3dDeviceContext = nullptr; }
     if (g_pd3dDevice) { g_pd3dDevice->Release(); g_pd3dDevice = nullptr; }
-}
-
-// 清理渲染目标视图
-void CleanupRenderTarget()
-{
-    if (g_mainRenderTargetView) { g_mainRenderTargetView->Release(); g_mainRenderTargetView = nullptr; }
 }
 
 // Win32窗口过程函数
