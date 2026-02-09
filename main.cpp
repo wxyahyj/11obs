@@ -2,8 +2,6 @@
 #include <windows.h>
 #include <d3d11.h>
 #include <imgui.h>
-#include <imgui_impl_win32.h>
-#include <imgui_impl_dx11.h>
 #include <iostream>
 #include <thread>
 
@@ -90,9 +88,7 @@ void CleanupDeviceD3D()
 // Win32窗口过程函数
 LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-    if (ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam))
-        return true;
-
+    // 简单的窗口消息处理
     switch (msg)
     {
     case WM_SIZE:
@@ -146,10 +142,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     // 设置ImGui样式
     ImGui::StyleColorsDark();
 
-    // 初始化ImGui平台/渲染器后端
-    ImGui_ImplWin32_Init(hwnd);
-    ImGui_ImplDX11_Init(g_pd3dDevice, g_pd3dDeviceContext);
-
     // 主循环
     bool done = false;
     while (!done)
@@ -167,8 +159,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
             break;
 
         // 开始ImGui帧
-        ImGui_ImplDX11_NewFrame();
-        ImGui_ImplWin32_NewFrame();
         ImGui::NewFrame();
 
         // 更新统计信息
@@ -182,7 +172,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         const float clear_color_with_alpha[4] = { 0.45f, 0.55f, 0.60f, 1.00f };
         g_pd3dDeviceContext->OMSetRenderTargets(1, &g_mainRenderTargetView, nullptr);
         g_pd3dDeviceContext->ClearRenderTargetView(g_mainRenderTargetView, clear_color_with_alpha);
-        ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 
         // 呈现
         g_pSwapChain->Present(1, 0);
@@ -192,8 +181,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     }
 
     // 清理
-    ImGui_ImplDX11_Shutdown();
-    ImGui_ImplWin32_Shutdown();
     ImGui::DestroyContext();
 
     CleanupDeviceD3D();

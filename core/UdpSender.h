@@ -4,12 +4,6 @@
 #include <vector>
 #include <cstdint>
 
-#define WIN32_LEAN_AND_MEAN
-#include <winsock2.h>
-#include <ws2tcpip.h>
-
-#pragma comment(lib, "ws2_32.lib")
-
 class UdpSender {
 public:
     UdpSender();
@@ -33,8 +27,8 @@ private:
     std::string targetIp;
     int port = 0;
 
-    SOCKET udpSocket = INVALID_SOCKET;
-    sockaddr_in serverAddr;
+    void* udpSocket = nullptr;
+    void* serverAddr = nullptr;
 
     bool connected = false;
 
