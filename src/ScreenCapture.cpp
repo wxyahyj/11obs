@@ -73,8 +73,8 @@ bool ScreenCapture::initialize(unsigned int displayIndex, unsigned int outWidth,
         return false;
     }
     
-    IDXGIFactory1* dxgiFactory = nullptr;
-    hr = dxgiAdapter->GetParent(__uuidof(IDXGIFactory1), (void**)&dxgiFactory);
+    IDXGIFactory* dxgiFactory = nullptr;
+    hr = dxgiAdapter->GetParent(__uuidof(IDXGIFactory), (void**)&dxgiFactory);
     dxgiAdapter->Release();
     if (FAILED(hr)) {
         std::cerr << "Failed to get DXGI factory: " << hr << std::endl;
