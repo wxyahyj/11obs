@@ -13,6 +13,39 @@
 #include <string>
 
 class LiveStreamer {
+public:
+    // 配置参数
+    struct Config {
+        // 屏幕采集参数
+        unsigned int displayIndex;
+        unsigned int outputWidth;
+        unsigned int outputHeight;
+        
+        // 编码参数
+        unsigned int frameRate;
+        unsigned int bitrate;
+        
+        // 传输参数
+        std::string serverIP;
+        unsigned int serverPort;
+        unsigned int maxPacketSize;
+    };
+    
+    LiveStreamer();
+    ~LiveStreamer();
+    
+    // 初始化
+    bool initialize(const Config& config);
+    
+    // 开始推流
+    void start();
+    
+    // 停止推流
+    void stop();
+    
+    // 获取状态
+    bool isRunning() const { return running; }
+    
 private:
     // 模块实例
     ScreenCapture screenCapture;
@@ -32,40 +65,10 @@ private:
     std::atomic<bool> running;
     
     // 配置参数
-    struct Config {
-        // 屏幕采集参数
-        unsigned int displayIndex;
-        unsigned int outputWidth;
-        unsigned int outputHeight;
-        
-        // 编码参数
-        unsigned int frameRate;
-        unsigned int bitrate;
-        
-        // 传输参数
-        std::string serverIP;
-        unsigned int serverPort;
-        unsigned int maxPacketSize;
-    } config;
+    Config config;
     
     // 线程函数
     void captureThreadFunc();
     void encodeThreadFunc();
     void transmitThreadFunc();
-    
-public:
-    LiveStreamer();
-    ~LiveStreamer();
-    
-    // 初始化
-    bool initialize(const Config& config);
-    
-    // 开始推流
-    void start();
-    
-    // 停止推流
-    void stop();
-    
-    // 获取状态
-    bool isRunning() const { return running; }
 };

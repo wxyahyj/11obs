@@ -1,6 +1,7 @@
 #include "UDPTransmitter.h"
 #include <iostream>
 #include <chrono>
+#include <algorithm>
 
 UDPTransmitter::UDPTransmitter()
     : sock(INVALID_SOCKET),
