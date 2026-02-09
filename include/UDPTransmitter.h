@@ -1,5 +1,10 @@
 #pragma once
 
+// 强制包含winsock2.h并防止winsock.h被包含
+#define WIN32_LEAN_AND_MEAN
+#define _WINSOCKAPI_
+
+#include <cstdint>
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <vector>

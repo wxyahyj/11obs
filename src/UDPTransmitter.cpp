@@ -63,17 +63,17 @@ bool UDPTransmitter::sendFrame(const UDPFrame& frame) {
     }
     
     // 计算数据包大小
-    UINT headerSize = sizeof(PacketHeader);
-    UINT payloadSize = maxPacketSize - headerSize;
+    unsigned int headerSize = sizeof(PacketHeader);
+    unsigned int payloadSize = maxPacketSize - headerSize;
     
     // 计算分包数量
-    UINT packetCount = (frame.data.size() + payloadSize - 1) / payloadSize;
+    unsigned int packetCount = (frame.data.size() + payloadSize - 1) / payloadSize;
     
     // 发送所有数据包
-    for (UINT i = 0; i < packetCount; i++) {
+    for (unsigned int i = 0; i < packetCount; i++) {
         // 计算当前包的偏移量和大小
-        UINT offset = i * payloadSize;
-        UINT currentPayloadSize = std::min(payloadSize, (UINT)(frame.data.size() - offset));
+        unsigned int offset = i * payloadSize;
+        unsigned int currentPayloadSize = std::min(payloadSize, (unsigned int)(frame.data.size() - offset));
         
         // 创建数据包
         std::vector<uint8_t> packet(headerSize + currentPayloadSize);
