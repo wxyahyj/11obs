@@ -30,18 +30,18 @@ private:
     // 配置参数
     struct Config {
         // 屏幕采集参数
-        UINT displayIndex;
-        UINT outputWidth;
-        UINT outputHeight;
+        unsigned int displayIndex;
+        unsigned int outputWidth;
+        unsigned int outputHeight;
         
         // 编码参数
-        UINT frameRate;
-        UINT bitrate;
+        unsigned int frameRate;
+        unsigned int bitrate;
         
         // 传输参数
         std::string serverIP;
-        UINT serverPort;
-        UINT maxPacketSize;
+        unsigned int serverPort;
+        unsigned int maxPacketSize;
     } config;
     
     // 线程函数

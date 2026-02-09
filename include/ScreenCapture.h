@@ -16,32 +16,32 @@ private:
     ID3D11ShaderResourceView* srv;
     ID3D11RenderTargetView* rtv;
     
-    UINT screenWidth;
-    UINT screenHeight;
-    UINT outputWidth;
-    UINT outputHeight;
+    unsigned int screenWidth;
+    unsigned int screenHeight;
+    unsigned int outputWidth;
+    unsigned int outputHeight;
     
     std::atomic<bool> running;
     
 public:
     struct CaptureFrame {
         ID3D11Texture2D* texture;
-        UINT width;
-        UINT height;
+        unsigned int width;
+        unsigned int height;
         uint64_t timestamp;
     };
     
     ScreenCapture();
     ~ScreenCapture();
     
-    bool initialize(UINT displayIndex = 0, UINT outputWidth = 640, UINT outputHeight = 640);
+    bool initialize(unsigned int displayIndex = 0, unsigned int outputWidth = 640, unsigned int outputHeight = 640);
     bool captureFrame(CaptureFrame& frame);
     void stop();
     
-    UINT getScreenWidth() const { return screenWidth; }
-    UINT getScreenHeight() const { return screenHeight; }
-    UINT getOutputWidth() const { return outputWidth; }
-    UINT getOutputHeight() const { return outputHeight; }
+    unsigned int getScreenWidth() const { return screenWidth; }
+    unsigned int getScreenHeight() const { return screenHeight; }
+    unsigned int getOutputWidth() const { return outputWidth; }
+    unsigned int getOutputHeight() const { return outputHeight; }
     
     ID3D11Device* getDevice() const { return device; }
     ID3D11DeviceContext* getDeviceContext() const { return deviceContext; }

@@ -21,7 +21,7 @@ UDPTransmitter::~UDPTransmitter() {
     WSACleanup();
 }
 
-bool UDPTransmitter::initialize(const std::string& serverIP, UINT serverPort, UINT maxPacketSize) {
+bool UDPTransmitter::initialize(const std::string& serverIP, unsigned int serverPort, unsigned int maxPacketSize) {
     this->serverIP = serverIP;
     this->serverPort = serverPort;
     this->maxPacketSize = maxPacketSize;

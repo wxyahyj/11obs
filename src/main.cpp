@@ -18,11 +18,11 @@ int main(int argc, char* argv[]) {
         std::cerr << "Warning: Failed to load config from command line, using default config" << std::endl;
     }
     
-    // 尝试从配置文件加载配置
-    std::string configFile = "config.json";
-    if (!configManager.loadFromFile(configFile)) {
-        std::cerr << "Warning: Failed to load config from file, using default config" << std::endl;
-    }
+    // 注意：配置文件加载功能已暂时移除，仅支持命令行参数配置
+    // std::string configFile = "config.json";
+    // if (!configManager.loadFromFile(configFile)) {
+    //     std::cerr << "Warning: Failed to load config from file, using default config" << std::endl;
+    // }
     
     // 获取配置
     const auto& config = configManager.getConfig();

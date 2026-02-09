@@ -4,6 +4,7 @@
 #include <ws2tcpip.h>
 #include <vector>
 #include <atomic>
+#include <string>
 
 #pragma comment(lib, "ws2_32.lib")
 
@@ -14,8 +15,8 @@ private:
     
     // 配置参数
     std::string serverIP;
-    UINT serverPort;
-    UINT maxPacketSize;
+    unsigned int serverPort;
+    unsigned int maxPacketSize;
     
     std::atomic<bool> running;
     
@@ -37,11 +38,11 @@ public:
     UDPTransmitter();
     ~UDPTransmitter();
     
-    bool initialize(const std::string& serverIP, UINT serverPort, UINT maxPacketSize = 1400);
+    bool initialize(const std::string& serverIP, unsigned int serverPort, unsigned int maxPacketSize = 1400);
     bool sendFrame(const UDPFrame& frame);
     void stop();
     
     const std::string& getServerIP() const { return serverIP; }
-    UINT getServerPort() const { return serverPort; }
-    UINT getMaxPacketSize() const { return maxPacketSize; }
+    unsigned int getServerPort() const { return serverPort; }
+    unsigned int getMaxPacketSize() const { return maxPacketSize; }
 };

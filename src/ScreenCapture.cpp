@@ -33,7 +33,7 @@ ScreenCapture::~ScreenCapture() {
     if (device) device->Release();
 }
 
-bool ScreenCapture::initialize(UINT displayIndex, UINT outWidth, UINT outHeight) {
+bool ScreenCapture::initialize(unsigned int displayIndex, unsigned int outWidth, unsigned int outHeight) {
     outputWidth = outWidth;
     outputHeight = outHeight;
     

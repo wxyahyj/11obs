@@ -1,13 +1,5 @@
 #include "ConfigManager.h"
 #include <iostream>
-#include <fstream>
-#include <sstream>
-
-// 使用nlohmann/json库解析JSON文件
-// 注意：需要将nlohmann/json.hpp头文件添加到项目中
-#include "nlohmann/json.hpp"
-
-using json = nlohmann::json;
 
 ConfigManager::ConfigManager() {
     setDefaultConfig();
@@ -23,63 +15,6 @@ void ConfigManager::setDefaultConfig() {
     config.serverIP = "127.0.0.1";
     config.serverPort = 5000;
     config.maxPacketSize = 1400;
-}
-
-bool ConfigManager::loadFromFile(const std::string& filePath) {
-    try {
-        std::ifstream file(filePath);
-        if (!file.is_open()) {
-            std::cerr << "Failed to open config file: " << filePath << std::endl;
-            return false;
-        }
-        
-        json j;
-        file >> j;
-        
-        // 解析屏幕采集参数
-        if (j.contains("capture")) {
-            const auto& capture = j["capture"];
-            if (capture.contains("displayIndex")) {
-                config.displayIndex = capture["displayIndex"];
-            }
-            if (capture.contains("outputWidth")) {
-                config.outputWidth = capture["outputWidth"];
-            }
-            if (capture.contains("outputHeight")) {
-                config.outputHeight = capture["outputHeight"];
-            }
-        }
-        
-        // 解析编码参数
-        if (j.contains("encode")) {
-            const auto& encode = j["encode"];
-            if (encode.contains("frameRate")) {
-                config.frameRate = encode["frameRate"];
-            }
-            if (encode.contains("bitrate")) {
-                config.bitrate = encode["bitrate"];
-            }
-        }
-        
-        // 解析传输参数
-        if (j.contains("transmit")) {
-            const auto& transmit = j["transmit"];
-            if (transmit.contains("serverIP")) {
-                config.serverIP = transmit["serverIP"];
-            }
-            if (transmit.contains("serverPort")) {
-                config.serverPort = transmit["serverPort"];
-            }
-            if (transmit.contains("maxPacketSize")) {
-                config.maxPacketSize = transmit["maxPacketSize"];
-            }
-        }
-        
-        return true;
-    } catch (const std::exception& e) {
-        std::cerr << "Failed to parse config file: " << e.what() << std::endl;
-        return false;
-    }
 }
 
 bool ConfigManager::loadFromCommandLine(int argc, char* argv[]) {

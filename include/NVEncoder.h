@@ -4,8 +4,13 @@
 #include <vector>
 #include <atomic>
 
-// NVENC SDK相关头文件
-#include <nvEncodeAPI.h>
+// 前向声明NVENC相关类型
+typedef int NVENCSTATUS;
+typedef void* NvEncoder;
+typedef struct {
+    unsigned int version;
+    // 其他成员将通过运行时动态获取
+} NV_ENCODE_API_FUNCTION_LIST;
 
 class NVEncoderPrivate;
 
@@ -24,12 +29,12 @@ public:
     ~NVEncoder();
     
     bool initialize(ID3D11Device* d3dDevice, ID3D11DeviceContext* d3dContext, 
-                   UINT width, UINT height, UINT frameRate, UINT bitrate);
+                   unsigned int width, unsigned int height, unsigned int frameRate, unsigned int bitrate);
     bool encodeFrame(ID3D11Texture2D* texture, EncodedFrame& encodedFrame);
     void stop();
     
-    UINT getWidth() const;
-    UINT getHeight() const;
-    UINT getFrameRate() const;
-    UINT getBitrate() const;
+    unsigned int getWidth() const;
+    unsigned int getHeight() const;
+    unsigned int getFrameRate() const;
+    unsigned int getBitrate() const;
 };

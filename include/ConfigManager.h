@@ -1,31 +1,30 @@
 #pragma once
 
 #include <string>
-#include <vector>
 
 class ConfigManager {
-private:
+public:
     struct Config {
         // 屏幕采集参数
-        UINT displayIndex;
-        UINT outputWidth;
-        UINT outputHeight;
+        unsigned int displayIndex;
+        unsigned int outputWidth;
+        unsigned int outputHeight;
         
         // 编码参数
-        UINT frameRate;
-        UINT bitrate;
+        unsigned int frameRate;
+        unsigned int bitrate;
         
         // 传输参数
         std::string serverIP;
-        UINT serverPort;
-        UINT maxPacketSize;
-    } config;
+        unsigned int serverPort;
+        unsigned int maxPacketSize;
+    };
+    
+private:
+    Config config;
     
 public:
     ConfigManager();
-    
-    // 从JSON文件加载配置
-    bool loadFromFile(const std::string& filePath);
     
     // 从命令行参数加载配置
     bool loadFromCommandLine(int argc, char* argv[]);
