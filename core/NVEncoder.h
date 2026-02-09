@@ -2,7 +2,13 @@
 
 #include <d3d11.h>
 #include <vector>
-#include <nvEncodeAPI.h>
+
+// 尝试包含NVENC头文件，如果不可用则使用简化实现
+#ifdef _WIN32
+    #ifdef NVENC_AVAILABLE
+        #include <nvEncodeAPI.h>
+    #endif
+#endif
 
 class NVEncoder {
 public:
@@ -31,8 +37,10 @@ private:
     int fps;
     int bitrate;
 
+#ifdef NVENC_AVAILABLE
     void* nvencEncoder = nullptr;
     NV_ENCODE_API_FUNCTION_LIST nvenc = {};
     NV_ENC_INITIALIZE_PARAMS initParams = {};
     NV_ENC_CONFIG encodeConfig = {};
+#endif
 };
