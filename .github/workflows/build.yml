@@ -15,6 +15,12 @@ jobs:
 
     - name: Set up Visual Studio environment
       uses: ilammy/msvc-dev-cmd@v1
+    
+    - name: Fetch latest code
+      run: |
+        # 获取最新的代码
+        git fetch origin main
+        git checkout main
 
     - name: Install dependencies
       run: |
