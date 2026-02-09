@@ -57,55 +57,13 @@ bool ScreenCapture::initialize(unsigned int displayIndex, unsigned int outWidth,
         return false;
     }
     
-    // 获取DXGI工厂
-    IDXGIDevice* dxgiDevice = nullptr;
-    hr = device->QueryInterface(__uuidof(IDXGIDevice), (void**)&dxgiDevice);
+    // 直接创建DXGI工厂
+    IDXGIFactory* dxgiFactory = nullptr;
+    hr = CreateDXGIFactory(__uuidof(IDXGIFactory), (void**)&dxgiFactory);
     if (FAILED(hr)) {
-        std::cerr << "Failed to get DXGI device: " << hr << std::endl;
+        std::cerr << "Failed to create DXGI factory: " << hr << std::endl;
         return false;
     }
-    
-    IDXGIAdapter* dxgiAdapter = nullptr;
-    hr = dxgiDevice->GetParent(__uuidof(IDXGIAdapter), (void**)&dxgiAdapter);
-    dxgiDevice->Release();
-    if (FAILED(hr)) {
-        std::cerr << "Failed to get DXGI adapter: " << hr << std::endl;
-        return false;
-    }
-    
-    // 尝试获取最新的DXGI工厂接口
-    IDXGIFactory6* dxgiFactory = nullptr;
-    hr = dxgiAdapter->GetParent(__uuidof(IDXGIFactory6), (void**)&dxgiFactory);
-    if (FAILED(hr)) {
-        // 如果获取IDXGIFactory6失败，尝试获取IDXGIFactory5
-        hr = dxgiAdapter->GetParent(__uuidof(IDXGIFactory5), (void**)&dxgiFactory);
-        if (FAILED(hr)) {
-            // 如果获取IDXGIFactory5失败，尝试获取IDXGIFactory4
-            hr = dxgiAdapter->GetParent(__uuidof(IDXGIFactory4), (void**)&dxgiFactory);
-            if (FAILED(hr)) {
-                // 如果获取IDXGIFactory4失败，尝试获取IDXGIFactory3
-                hr = dxgiAdapter->GetParent(__uuidof(IDXGIFactory3), (void**)&dxgiFactory);
-                if (FAILED(hr)) {
-                    // 如果获取IDXGIFactory3失败，尝试获取IDXGIFactory2
-                    hr = dxgiAdapter->GetParent(__uuidof(IDXGIFactory2), (void**)&dxgiFactory);
-                    if (FAILED(hr)) {
-                        // 如果获取IDXGIFactory2失败，尝试获取IDXGIFactory1
-                        hr = dxgiAdapter->GetParent(__uuidof(IDXGIFactory1), (void**)&dxgiFactory);
-                        if (FAILED(hr)) {
-                            // 如果获取IDXGIFactory1失败，尝试获取IDXGIFactory
-                            hr = dxgiAdapter->GetParent(__uuidof(IDXGIFactory), (void**)&dxgiFactory);
-                            if (FAILED(hr)) {
-                                dxgiAdapter->Release();
-                                std::cerr << "Failed to get DXGI factory: " << hr << std::endl;
-                                return false;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-    dxgiAdapter->Release();
     
     // 获取显示输出
     IDXGIOutput* dxgiOutput = nullptr;
