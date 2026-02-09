@@ -33,7 +33,6 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
-#include <vector>
 
 //---- Forward declarations
 struct ImDrawCmd;       // Draw command list (list of ImDrawCmd)
@@ -55,40 +54,6 @@ struct ImGuiViewport;   // Viewport
 struct ImGuiWindow;     // Window
 struct ImGuiWindowClass; // Window class
 
-//---- Basic types
-typedef unsigned int ImU32;
-typedef unsigned short ImWchar;
-
-//---- Vector template
-template<typename T>
-struct ImVector
-{
-    int Size;
-    int Capacity;
-    T* Data;
-
-    typedef T                   value_type;
-    typedef value_type*         iterator;
-    typedef const value_type*   const_iterator;
-
-    inline bool         empty() const                     { return Size == 0; }
-    inline int          size() const                      { return Size; }
-    inline int          capacity() const                  { return Capacity; }
-    inline T&           operator[](int i)                 { IM_ASSERT(i >= 0 && i < Size); return Data[i]; }
-    inline const T&     operator[](int i) const           { IM_ASSERT(i >= 0 && i < Size); return Data[i]; }
-    
-    inline void         clear()                           { if (Data) { Size = Capacity = 0; } }
-    inline T*           begin()                           { return Data; }
-    inline const T*     begin() const                     { return Data; }
-    inline T*           end()                             { return Data + Size; }
-    inline const T*     end() const                       { return Data + Size; }
-    inline T&           front()                           { IM_ASSERT(Size > 0); return Data[0]; }
-    inline const T&     front() const                     { IM_ASSERT(Size > 0); return Data[0]; }
-    inline T&           back()                            { IM_ASSERT(Size > 0); return Data[Size - 1]; }
-    inline const T&     back() const                      { IM_ASSERT(Size > 0); return Data[Size - 1]; }
-    inline void         swap(ImVector<T>& rhs)            { int rhs_size = rhs.Size; rhs.Size = Size; Size = rhs_size; int rhs_cap = rhs.Capacity; rhs.Capacity = Capacity; Capacity = rhs_cap; T* rhs_data = rhs.Data; rhs.Data = Data; Data = rhs_data; }
-};
-
 //---- Enumerations
 // Draw list flags
 typedef enum ImDrawListFlags_ {
@@ -101,37 +66,29 @@ typedef enum ImDrawListFlags_ {
 } ImDrawListFlags;
 
 // Draw command flags
-enum ImDrawCmdFlags_ {
+typedef enum ImDrawCmdFlags_ {
     ImDrawCmdFlags_None                    = 0,
     ImDrawCmdFlags_UserCallbackInvoke      = 1 << 0, // User callback to be called
     ImDrawCmdFlags_UserCallbackHasOutput   = 1 << 1, // User callback may output draw commands
     ImDrawCmdFlags_LayerNext               = 1 << 2, // Switch to next layer
-};
-typedef int ImDrawCmdFlags;
-
-// Draw list flags
-enum ImDrawListFlags_ {
-    ImDrawListFlags_None                   = 0,
-    ImDrawListFlags_AntiAliasedLines       = 1 << 1, // Enable anti-aliased lines/borders
-    ImDrawListFlags_AntiAliasedFill        = 1 << 2, // Enable anti-aliased fills
-    ImDrawListFlags_AllowVtxOffset         = 1 << 3, // Allow large meshes (64k+ vertices) with 16-bit indices
-};
-typedef int ImDrawListFlags;
+} ImDrawCmdFlags;
 
 // Font Atlas flags
-enum ImFontAtlasFlags_ {
+typedef enum ImFontAtlasFlags_ {
     ImFontAtlasFlags_None                  = 0,
     ImFontAtlasFlags_NoPowerOfTwoHeight    = 1 << 0, // Don't round the height to next power of two
     ImFontAtlasFlags_NoMouseCursors        = 1 << 1, // Don't build software mouse cursors into the atlas
     ImFontAtlasFlags_NoBakedLines          = 1 << 2, // Don't build merged lines into the atlas (save a little texture space)
-    ImFontAtlasFlags_NoTTFPaths            = 1 << 3, // Deprecated, use ImFontAtlasFlags_NoTestFont instead
-    ImFontAtlasFlags_NoShapeRendering      = 1 << 4, // Don't build software mouse cursors into the atlas
-    ImFontAtlasFlags_NoTestFont            = 1 << 5, // Don't build default font into the atlas
-};
-typedef int ImFontAtlasFlags;
+    ImFontAtlasFlags_TextureFromFileHDR    = 1 << 3, // Load texture as HDR
+    ImFontAtlasFlags_TexturePixelFormat32  = 1 << 4, // Use 32-bit textures (default is 8-bit)
+    ImFontAtlasFlags_TexturePixelFormatRGBA32 = 1 << 5, // Use RGBA32 textures (default is 8-bit)
+    ImFontAtlasFlags_TexturePixelFormatRGB32  = 1 << 6, // Use RGB32 textures (default is 8-bit)
+    ImFontAtlasFlags_TexturePixelFormatRGBA16 = 1 << 7, // Use RGBA16 textures (default is 8-bit)
+    ImFontAtlasFlags_TexturePixelFormatRGBA8  = 1 << 8, // Use RGBA8 textures (default is 8-bit)
+} ImFontAtlasFlags;
 
 // Font flags
-enum ImFontFlags_ {
+typedef enum ImFontFlags_ {
     ImFontFlags_None                       = 0,
     ImFontFlags_Italic                     = 1 << 0, // TODO: Not implemented
     ImFontFlags_Bold                       = 1 << 1, // TODO: Not implemented
@@ -152,20 +109,18 @@ enum ImFontFlags_ {
     ImFontFlags_ForceAutoHint              = 1 << 16, // TODO: Not implemented
     ImFontFlags_NoAutoHint                 = 1 << 17, // TODO: Not implemented
     ImFontFlags_GlyphExtraSpacing          = 1 << 18, // TODO: Not implemented
-};
-typedef int ImFontFlags;
+} ImFontFlags;
 
 // Style flags
-enum ImGuiStyleFlags_ {
+typedef enum ImGuiStyleFlags_ {
     ImGuiStyleFlags_None                   = 0,
     ImGuiStyleFlags_AlphaPreview           = 1 << 0, // TODO: Not implemented
     ImGuiStyleFlags_AlphaPreviewHalf       = 1 << 1, // TODO: Not implemented
     ImGuiStyleFlags_NoMouseCursorChange    = 1 << 2, // TODO: Not implemented
-};
-typedef int ImGuiStyleFlags;
+} ImGuiStyleFlags;
 
 // Config flags
-enum ImGuiConfigFlags_ {
+typedef enum ImGuiConfigFlags_ {
     ImGuiConfigFlags_None                  = 0,
     ImGuiConfigFlags_NoMouse               = 1 << 0, // Disable mouse input
     ImGuiConfigFlags_NoMouseCursorChange   = 1 << 1, // Disable mouse cursor changes
@@ -185,11 +140,10 @@ enum ImGuiConfigFlags_ {
     ImGuiConfigFlags_DpiEnableScaleViewports = 1 << 15, // Enable viewport scaling
     ImGuiConfigFlags_IsSRGB                 = 1 << 16, // TODO: Not implemented
     ImGuiConfigFlags_IsTouchScreen          = 1 << 17, // TODO: Not implemented
-};
-typedef int ImGuiConfigFlags;
+} ImGuiConfigFlags;
 
 // Color edit flags
-enum ImGuiColorEditFlags_ {
+typedef enum ImGuiColorEditFlags_ {
     ImGuiColorEditFlags_None               = 0,
     ImGuiColorEditFlags_NoAlpha            = 1 << 0, // Disable alpha channel
     ImGuiColorEditFlags_NoPicker           = 1 << 1, // Disable color picker
@@ -214,11 +168,10 @@ enum ImGuiColorEditFlags_ {
     ImGuiColorEditFlags_InputRGB           = 1 << 20, // Input RGB values
     ImGuiColorEditFlags_InputHSV           = 1 << 21, // Input HSV values
     ImGuiColorEditFlags_InputHex           = 1 << 22, // Input hex values
-};
-typedef int ImGuiColorEditFlags;
+} ImGuiColorEditFlags;
 
 // Window flags
-enum ImGuiWindowFlags_ {
+typedef enum ImGuiWindowFlags_ {
     ImGuiWindowFlags_None                  = 0,
     ImGuiWindowFlags_NoTitleBar            = 1 << 0, // Disable title bar
     ImGuiWindowFlags_NoResize              = 1 << 1, // Disable resizing
@@ -248,11 +201,10 @@ enum ImGuiWindowFlags_ {
     ImGuiWindowFlags_ListBox               = 1 << 26, // List box
     ImGuiWindowFlags_Child                 = 1 << 27, // Child window
     ImGuiWindowFlags_PopupModal            = ImGuiWindowFlags_Popup | ImGuiWindowFlags_Modal, // Popup modal window
-};
-typedef int ImGuiWindowFlags;
+} ImGuiWindowFlags;
 
 // TreeNode flags
-enum ImGuiTreeNodeFlags_ {
+typedef enum ImGuiTreeNodeFlags_ {
     ImGuiTreeNodeFlags_None                = 0,
     ImGuiTreeNodeFlags_Selected            = 1 << 0, // Selected node
     ImGuiTreeNodeFlags_Framed              = 1 << 1, // Framed node
@@ -269,22 +221,20 @@ enum ImGuiTreeNodeFlags_ {
     ImGuiTreeNodeFlags_SpanFullWidth       = 1 << 12, // Span full width
     ImGuiTreeNodeFlags_NavLeftJumpsBackHere = 1 << 13, // Nav left jumps back here
     ImGuiTreeNodeFlags_CollapsingHeader    = ImGuiTreeNodeFlags_NoTreePushOnOpen | ImGuiTreeNodeFlags_NoAutoOpenOnLog, // Collapsing header
-};
-typedef int ImGuiTreeNodeFlags;
+} ImGuiTreeNodeFlags;
 
 // Selectable flags
-enum ImGuiSelectableFlags_ {
+typedef enum ImGuiSelectableFlags_ {
     ImGuiSelectableFlags_None              = 0,
     ImGuiSelectableFlags_DontClosePopups   = 1 << 0, // Don't close popups
     ImGuiSelectableFlags_SpanAllColumns    = 1 << 1, // Span all columns
     ImGuiSelectableFlags_AllowDoubleClick  = 1 << 2, // Allow double click
     ImGuiSelectableFlags_Disabled          = 1 << 3, // Disabled
-    ImGuiSelectableFlags_Selected          = 1 << 4, // Selected,
-};
-typedef int ImGuiSelectableFlags;
+    ImGuiSelectableFlags_Selected          = 1 << 4, // Selected
+} ImGuiSelectableFlags;
 
 // Input text flags
-enum ImGuiInputTextFlags_ {
+typedef enum ImGuiInputTextFlags_ {
     ImGuiInputTextFlags_None               = 0,
     ImGuiInputTextFlags_CharsDecimal       = 1 << 0, // Allow decimal characters
     ImGuiInputTextFlags_CharsHexadecimal   = 1 << 1, // Allow hexadecimal characters
@@ -306,22 +256,20 @@ enum ImGuiInputTextFlags_ {
     ImGuiInputTextFlags_CharsScientific    = 1 << 17, // Allow scientific notation
     ImGuiInputTextFlags_CallbackResize     = 1 << 18, // Callback on resize
     ImGuiInputTextFlags_CallbackEdit        = 1 << 19, // Callback on edit
-};
-typedef int ImGuiInputTextFlags;
+} ImGuiInputTextFlags;
 
 // Slider flags
-enum ImGuiSliderFlags_ {
+typedef enum ImGuiSliderFlags_ {
     ImGuiSliderFlags_None                  = 0,
     ImGuiSliderFlags_AlwaysClamp           = 1 << 0, // Always clamp value
     ImGuiSliderFlags_Logarithmic           = 1 << 1, // Logarithmic scale
     ImGuiSliderFlags_NoRoundToFormat       = 1 << 2, // No round to format
     ImGuiSliderFlags_NoInput               = 1 << 3, // No input
     ImGuiSliderFlags_InvalidMask_          = 0x7FFFFFFF,
-};
-typedef int ImGuiSliderFlags;
+} ImGuiSliderFlags;
 
 // Table flags
-enum ImGuiTableFlags_ {
+typedef enum ImGuiTableFlags_ {
     ImGuiTableFlags_None                   = 0,
     ImGuiTableFlags_Resizable              = 1 << 0, // Resizable columns
     ImGuiTableFlags_Reorderable            = 1 << 1, // Reorderable columns
@@ -353,11 +301,10 @@ enum ImGuiTableFlags_ {
     ImGuiTableFlags_SortMulti              = 1 << 26, // Multi sort
     ImGuiTableFlags_SortTristate           = 1 << 27, // Tristate sort
     ImGuiTableFlags_SizingMask_            = ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_SizingFixedSame | ImGuiTableFlags_SizingStretchProp | ImGuiTableFlags_SizingStretchSame,
-};
-typedef int ImGuiTableFlags;
+} ImGuiTableFlags;
 
 // Table column flags
-enum ImGuiTableColumnFlags_ {
+typedef enum ImGuiTableColumnFlags_ {
     ImGuiTableColumnFlags_None             = 0,
     ImGuiTableColumnFlags_DefaultSort      = 1 << 0, // Default sort column
     ImGuiTableColumnFlags_NoSort           = 1 << 1, // No sort
@@ -378,11 +325,10 @@ enum ImGuiTableColumnFlags_ {
     ImGuiTableColumnFlags_IsEnabled        = 1 << 16, // Is enabled
     ImGuiTableColumnFlags_IsVisible        = 1 << 17, // Is visible
     ImGuiTableColumnFlags_WidthMask_       = ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_WidthStretch | ImGuiTableColumnFlags_WidthAuto,
-};
-typedef int ImGuiTableColumnFlags;
+} ImGuiTableColumnFlags;
 
 // Nav input sources
-enum ImGuiInputSource_ {
+typedef enum ImGuiInputSource_ {
     ImGuiInputSource_None                  = 0, // No input source
     ImGuiInputSource_Mouse                 = 1, // Mouse input
     ImGuiInputSource_Keyboard              = 2, // Keyboard input
@@ -391,20 +337,18 @@ enum ImGuiInputSource_ {
     ImGuiInputSource_NavGamepad            = 5, // Navigation gamepad input
     ImGuiInputSource_NavMouse              = 6, // Navigation mouse input
     ImGuiInputSource_COUNT                 = 7,
-};
-typedef int ImGuiInputSource;
+} ImGuiInputSource;
 
 // Mouse buttons
-enum ImGuiMouseButton_ {
+typedef enum ImGuiMouseButton_ {
     ImGuiMouseButton_Left                  = 0,
     ImGuiMouseButton_Right                 = 1,
     ImGuiMouseButton_Middle                = 2,
     ImGuiMouseButton_COUNT                 = 3,
-};
-typedef int ImGuiMouseButton;
+} ImGuiMouseButton;
 
 // Mouse cursor
-enum ImGuiMouseCursor_ {
+typedef enum ImGuiMouseCursor_ {
     ImGuiMouseCursor_Arrow                = 0,
     ImGuiMouseCursor_TextInput            = 1,
     ImGuiMouseCursor_ResizeAll            = 2,
@@ -415,11 +359,10 @@ enum ImGuiMouseCursor_ {
     ImGuiMouseCursor_Hand                 = 7,
     ImGuiMouseCursor_NotAllowed           = 8,
     ImGuiMouseCursor_COUNT                = 9,
-};
-typedef int ImGuiMouseCursor;
+} ImGuiMouseCursor;
 
 // Color indices
-enum ImGuiCol_ {
+typedef enum ImGuiCol_ {
     ImGuiCol_Text                         = 0,
     ImGuiCol_TextDisabled                 = 1,
     ImGuiCol_WindowBg                     = 2,
@@ -476,11 +419,10 @@ enum ImGuiCol_ {
     ImGuiCol_NavWindowingDimBg            = 53,
     ImGuiCol_ModalWindowDimBg             = 54,
     ImGuiCol_COUNT                        = 55,
-};
-typedef int ImGuiCol;
+} ImGuiCol;
 
 // Key codes
-enum ImGuiKey_ {
+typedef enum ImGuiKey_ {
     ImGuiKey_None                          = 0,
     ImGuiKey_Tab                           = 1,
     ImGuiKey_LeftArrow                     = 2,
@@ -588,11 +530,10 @@ enum ImGuiKey_ {
     ImGuiKey_KeypadEnter                   = 104,
     ImGuiKey_KeypadEqual                   = 105,
     ImGuiKey_COUNT                         = 106,
-};
-typedef int ImGuiKey;
+} ImGuiKey;
 
 // Gamepad buttons
-enum ImGuiGamepadKey_ {
+typedef enum ImGuiGamepadKey_ {
     ImGuiGamepadKey_DpadUp                 = 0,
     ImGuiGamepadKey_DpadDown               = 1,
     ImGuiGamepadKey_DpadLeft               = 2,
@@ -608,8 +549,7 @@ enum ImGuiGamepadKey_ {
     ImGuiGamepadKey_Start                  = 12,
     ImGuiGamepadKey_Back                   = 13,
     ImGuiGamepadKey_COUNT                  = 14,
-};
-typedef int ImGuiGamepadKey;
+} ImGuiGamepadKey;
 
 // User data types
 //------------------------
@@ -659,14 +599,13 @@ struct ImVector {
 };
 
 // ImGuiMod flags
-enum ImGuiMod_ {
+typedef enum ImGuiMod_ {
     ImGuiMod_None   = 0,
     ImGuiMod_Ctrl   = 1 << 0,
     ImGuiMod_Shift  = 1 << 1,
     ImGuiMod_Alt    = 1 << 2,
     ImGuiMod_Super  = 1 << 3,
-};
-typedef int ImGuiModFlags;
+} ImGuiModFlags;
 
 // Color types
 typedef ImVec4 ImColor;
@@ -685,6 +624,7 @@ typedef uint16_t ImDrawIdx;
 
 // Draw command
 struct ImDrawCmd {
+    ImDrawCmd() : clip_rect(0, 0, 0, 0), texture_id(nullptr), vtx_offset(0), idx_offset(0), elem_count(0), flags(0), user_callback(nullptr), user_callback_data(nullptr) {}
     ImVec4 clip_rect;
     void* texture_id;
     uint32_t vtx_offset;
@@ -693,12 +633,11 @@ struct ImDrawCmd {
     ImDrawCmdFlags flags;
     void (*user_callback)(const ImDrawList* parent_list, const ImDrawCmd* cmd);
     void* user_callback_data;
-
-    ImDrawCmd() { memset(this, 0, sizeof(*this)); } // Initialize all members to zero
 };
 
 // Draw list
 struct ImDrawList {
+    ImDrawList() : vtx_buffer(), idx_buffer(), cmd_buffer(), flags(0), texture_id(nullptr), vtx_current_idx(0), idx_current_idx(0), clip_rect_stack(), texture_id_stack(), is_channels_split(false), channels(), channels_current(0), shared_data(nullptr) {}
     std::vector<ImDrawVert> vtx_buffer;
     std::vector<ImDrawIdx> idx_buffer;
     std::vector<ImDrawCmd> cmd_buffer;
@@ -712,12 +651,11 @@ struct ImDrawList {
     std::vector<ImDrawList*> channels;
     int channels_current;
     ImDrawListSharedData* shared_data;
-
-    ImDrawList() { memset(this, 0, sizeof(*this)); } // Initialize all members to zero
 };
 
 // Draw data
 struct ImDrawData {
+    ImDrawData() : valid(false), cmd_lists(nullptr), cmd_lists_count(0), total_idx_count(0), total_vtx_count(0), display_pos(0, 0), display_size(0, 0), framebuffer_scale(1, 1) {}
     bool valid;
     ImDrawList** cmd_lists;
     int cmd_lists_count;
@@ -726,22 +664,20 @@ struct ImDrawData {
     ImVec2 display_pos;
     ImVec2 display_size;
     ImVec2 framebuffer_scale;
-
-    ImDrawData() { memset(this, 0, sizeof(*this)); } // Initialize all members to zero
 };
 
 // Font glyph
 struct ImFontGlyph {
+    ImFontGlyph() : codepoint(0), advance_x(0.0f), x0(0.0f), y0(0.0f), x1(0.0f), y1(0.0f), u0(0.0f), v0(0.0f), u1(0.0f), v1(0.0f) {}
     ImWchar codepoint;
     float advance_x;
     float x0, y0, x1, y1;
     float u0, v0, u1, v1;
-
-    ImFontGlyph() { memset(this, 0, sizeof(*this)); } // Initialize all members to zero
 };
 
 // Font configuration
 struct ImFontConfig {
+    ImFontConfig() : Name(nullptr), SizePixels(0.0f), OversampleH(2), OversampleV(1), PixelSnapH(false), GlyphExtraSpacing(0, 0), GlyphOffset(0, 0), GlyphRanges(nullptr), MergeMode(false), FontData(nullptr), FontDataSize(0), FontDataOwnedByAtlas(false), FontNo(nullptr), FontBuilderFlags(0), RasterizerMultiply(1.0f), RasterizerFlags(0), EllipsisChar(0x0085) {}
     const char* Name;
     float SizePixels;
     int OversampleH;
@@ -759,12 +695,11 @@ struct ImFontConfig {
     float RasterizerMultiply;
     int RasterizerFlags;
     ImWchar EllipsisChar;
-
-    ImFontConfig() { memset(this, 0, sizeof(*this)); } // Initialize all members to zero
 };
 
 // Font atlas
 struct ImFontAtlas {
+    ImFontAtlas() : TexID(nullptr), TexWidth(0), TexHeight(0), TexPixels(nullptr), TexPixelsAlpha8(nullptr), TexPixelsRgba32(nullptr), ConfigDataSize(0), ConfigData(nullptr), GlyphRangesBuild(nullptr), CustomRects(), CustomRectsNames(), Flags(0), Locked(false) {}
     void* TexID;
     int TexWidth, TexHeight;
     unsigned char* TexPixels;
@@ -777,12 +712,11 @@ struct ImFontAtlas {
     ImVector<const char*> CustomRectsNames;
     ImFontAtlasFlags Flags;
     bool Locked;
-
-    ImFontAtlas() { memset(this, 0, sizeof(*this)); } // Initialize all members to zero
 };
 
 // Font
 struct ImFont {
+    ImFont() : ConfigData(nullptr), FallbackFont(nullptr), AtlasTexID(nullptr), TexUvScale(1, 1), TexUvOffset(0, 0), FontSize(0), Ascent(0), Descent(0), Glyphs(), IndexAdvanceX(), IndexLookup(), FallbackAdvanceX(0), Scale(1), MetricsTotalSurface(0), ConfigDataCount(0) {}
     const ImFontConfig* ConfigData;
     ImFont* FallbackFont;
     void* AtlasTexID;
@@ -798,8 +732,6 @@ struct ImFont {
     float Scale;
     float MetricsTotalSurface;
     int ConfigDataCount;
-
-    ImFont() { memset(this, 0, sizeof(*this)); } // Initialize all members to zero
 };
 
 // ImGui context
@@ -899,7 +831,7 @@ struct ImGuiContext {
 };
 
 // Backend flags
-enum ImGuiBackendFlags_ {
+typedef enum ImGuiBackendFlags_ {
     ImGuiBackendFlags_None                 = 0,
     ImGuiBackendFlags_HasMouseCursors      = 1 << 0,
     ImGuiBackendFlags_HasSetMousePos       = 1 << 1,
@@ -908,11 +840,10 @@ enum ImGuiBackendFlags_ {
     ImGuiBackendFlags_RendererHasVtxOffset  = 1 << 4,
     ImGuiBackendFlags_RendererHasViewports  = 1 << 5,
     ImGuiBackendFlags_RendererHasTextureAtlas = 1 << 6,
-};
-typedef int ImGuiBackendFlags;
+} ImGuiBackendFlags;
 
 // Viewport flags
-enum ImGuiViewportFlags_ {
+typedef enum ImGuiViewportFlags_ {
     ImGuiViewportFlags_None                = 0,
     ImGuiViewportFlags_NoDecoration        = 1 << 0,
     ImGuiViewportFlags_NoTaskBarIcon       = 1 << 1,
@@ -931,8 +862,7 @@ enum ImGuiViewportFlags_ {
     ImGuiViewportFlags_ChildMenu           = 1 << 14,
     ImGuiViewportFlags_TableHeader         = 1 << 15,
     ImGuiViewportFlags_TableRow            = 1 << 16,
-};
-typedef int ImGuiViewportFlags;
+} ImGuiViewportFlags;
 
 // ImGui IO
 struct ImGuiIO {
@@ -1016,14 +946,13 @@ struct ImGuiIO {
 };
 
 // Direction
-enum ImGuiDir_ {
+typedef enum ImGuiDir_ {
     ImGuiDir_None   = -1,
     ImGuiDir_Left   = 0,
     ImGuiDir_Right  = 1,
     ImGuiDir_Up     = 2,
     ImGuiDir_Down   = 3,
-};
-typedef int ImGuiDir;
+} ImGuiDir;
 
 // ImGui style
 struct ImGuiStyle {
